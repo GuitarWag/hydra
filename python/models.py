@@ -1,21 +1,24 @@
 from __future__ import annotations
-from typing import List, Optional
+
 from pydantic import BaseModel, Field
+
 
 class NodeMetadata(BaseModel):
     tokens: int
     model: str
     latency_ms: int
 
+
 class HydraNode(BaseModel):
     id: str
     topic: str
     depth: int
-    children: List[HydraNode] = Field(default_factory=list)
-    resolution: Optional[str] = None
+    children: list[HydraNode] = Field(default_factory=list)
+    resolution: str | None = None
     metadata: NodeMetadata
-    status: Optional[str] = None
+    status: str | None = None
+
 
 class DecomposerResponse(BaseModel):
-    subtopics: List[str]
+    subtopics: list[str]
     metadata: NodeMetadata

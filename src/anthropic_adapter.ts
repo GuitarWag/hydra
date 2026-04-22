@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
-import { Adapter, DecomposerResponse } from "./types";
+import type { Adapter, DecomposerResponse } from "./types";
 
 export class AnthropicAdapter implements Adapter {
   private client: Anthropic;
@@ -11,9 +13,8 @@ export class AnthropicAdapter implements Adapter {
   }
 
   async decompose(topic: string, breadth: number): Promise<DecomposerResponse> {
-    const prompt = `Decompose the topic "${topic}" into exactly ${breadth} sub-items.
-Return ONLY a JSON object with a "subtopics" key containing an array of strings.
-Example: {"subtopics": ["item1", "item2"]}`;
+    const tmpl = readFileSync(resolve(__dirname, "..", "protocol", "decompose.prompt"), "utf-8");
+    const prompt = tmpl.replace("{{BREADTH}}", String(breadth)).replace("{{TOPIC}}", topic);
 
     const start = Date.now();
     const response = await this.client.messages.create({
@@ -24,12 +25,12 @@ Example: {"subtopics": ["item1", "item2"]}`;
     const end = Date.now();
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";
-    
+
     try {
       // Basic JSON extraction if there's markdown fluff
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
-      
+
       return {
         subtopics: data.subtopics.slice(0, breadth),
         metadata: {
@@ -38,8 +39,8 @@ Example: {"subtopics": ["item1", "item2"]}`;
           latency_ms: end - start,
         },
       };
-    } catch (e: any) {
-      throw new Error(`Failed to parse Anthropic response: ${e.message}`);
+    } catch (e) {
+      throw new Error(`Failed to parse Anthropic response: ${e instanceof Error ? e.message : e}`);
     }
   }
 

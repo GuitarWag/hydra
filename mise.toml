@@ -1,0 +1,79 @@
+#:schema https://mise.jdx.dev/schema/mise.toml.json
+
+# ──────────────────────────────────────────────
+# Hydra — Unified Dev Environment (mise)
+# ──────────────────────────────────────────────
+# Install mise: https://mise.jdx.dev/getting-started.html
+# Then run: mise install && mise run setup
+
+min_version = "2025.1.0"
+
+[env]
+_.file = ".env"
+
+# ── Tool versions ────────────────────────────
+[tools]
+node   = "24.14"
+go     = "1.26.1"
+python = "3.13"
+
+# ── Tasks ────────────────────────────────────
+
+# Setup — bootstrap all three workspaces
+[tasks.setup]
+description = "Install dependencies for all workspaces (TS, Go, Python)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> Installing Node dependencies..."
+npm install
+
+echo "==> Downloading Go modules..."
+(cd go && go mod download)
+
+echo "==> Setting up Python virtualenv..."
+(cd python && python -m venv venv && source venv/bin/activate && pip install anthropic pytest pytest-asyncio ruff)
+
+echo "==> Setup complete."
+"""
+
+# ── Test tasks ───────────────────────────────
+
+[tasks.test]
+description = "Run all test suites (TS, Go, Python)"
+depends = ["test:ts", "test:go", "test:python"]
+
+[tasks."test:ts"]
+description = "Run TypeScript tests (vitest)"
+run = "npm test"
+
+[tasks."test:go"]
+description = "Run Go unit tests"
+run = "cd go && go test -skip TestEvalDecomposition ./..."
+
+[tasks."eval"]
+description = "Run Go LLM-as-judge evals (needs ANTHROPIC_API_KEY)"
+run = "cd go && go test -v -run TestEvalDecomposition -timeout 300s ./..."
+
+[tasks."test:python"]
+description = "Run Python tests (pytest)"
+run = "cd python && ./venv/bin/pytest"
+
+# ── Lint tasks ───────────────────────────────
+
+[tasks.lint]
+description = "Run all linters (Biome, golangci-lint, Ruff)"
+depends = ["lint:ts", "lint:go", "lint:python"]
+
+[tasks."lint:ts"]
+description = "Lint TypeScript with Biome"
+run = "npx @biomejs/biome check ."
+
+[tasks."lint:go"]
+description = "Lint Go with golangci-lint"
+run = "cd go && golangci-lint run"
+
+[tasks."lint:python"]
+description = "Lint Python with Ruff"
+run = "cd python && ./venv/bin/ruff check ."

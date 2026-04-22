@@ -2,3 +2,19 @@ node_modules
 dist
 .env
 .DS_Store
+coverage
+
+# Python
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+htmlcov
+*.egg-info
+
+# Go
+go/coverage.out
+
+# IDE
+.idea
+.vscode

@@ -2,8 +2,9 @@ import asyncio
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import List
-from models import HydraNode, NodeMetadata, DecomposerResponse
+
+from models import DecomposerResponse, HydraNode, NodeMetadata
+
 
 class Adapter(ABC):
     @abstractmethod
@@ -14,12 +15,20 @@ class Adapter(ABC):
     def get_model_name(self) -> str:
         pass
 
+
 class HydraConfig:
-    def __init__(self, initial_prompt: str, depth_limit: int, branching_factor: int, adapter: Adapter):
+    def __init__(
+        self,
+        initial_prompt: str,
+        depth_limit: int,
+        branching_factor: int,
+        adapter: Adapter,
+    ):
         self.initial_prompt = initial_prompt
         self.depth_limit = depth_limit
         self.branching_factor = branching_factor
         self.adapter = adapter
+
 
 class HydraEngine:
     def __init__(self, config: HydraConfig):
@@ -34,11 +43,9 @@ class HydraEngine:
             topic=topic,
             depth=current_depth,
             metadata=NodeMetadata(
-                tokens=0,
-                model=self.config.adapter.get_model_name(),
-                latency_ms=0
+                tokens=0, model=self.config.adapter.get_model_name(), latency_ms=0
             ),
-            children=[]
+            children=[],
         )
 
         if current_depth >= self.config.depth_limit:
@@ -55,13 +62,12 @@ class HydraEngine:
 
             # FR-2: Parallel Execution with asyncio.gather
             child_tasks = [
-                self._expand(subtopic, current_depth + 1)
-                for subtopic in response.subtopics
+                self._expand(subtopic, current_depth + 1) for subtopic in response.subtopics
             ]
-            
+
             node.children = list(await asyncio.gather(*child_tasks))
             node.status = "success"
-        except Exception as e:
+        except Exception:
             node.status = "failed"
             # Optional: print(f"Error expanding {topic}: {e}")
 

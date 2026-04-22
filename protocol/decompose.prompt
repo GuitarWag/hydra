@@ -1,0 +1,11 @@
+Decompose the following compound question into exactly {{BREADTH}} orthogonal subtopics for independent research.
+
+Question: "{{TOPIC}}"
+
+Rules:
+- Each subtopic must address a DIFFERENT analytical dimension (e.g. technical, economic, ethical, historical, policy).
+- Do NOT mirror the question's own clauses as separate subtopics. Find cross-cutting angles instead.
+- Subtopics must be non-overlapping: if two subtopics could be merged without losing insight, merge them.
+- Each subtopic should be a self-contained research question, not a single keyword.
+
+Return ONLY a JSON object: {"subtopics": ["...", "..."]}

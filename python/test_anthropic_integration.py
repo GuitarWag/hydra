@@ -1,11 +1,13 @@
 import os
+
 import pytest
-import asyncio
 from dotenv import load_dotenv
+
 from anthropic_adapter import AnthropicAdapter
-from engine import HydraEngine, HydraConfig
+from engine import HydraConfig, HydraEngine
 
 load_dotenv()
+
 
 @pytest.mark.asyncio
 async def test_anthropic_integration():
@@ -14,7 +16,7 @@ async def test_anthropic_integration():
         pytest.skip("ANTHROPIC_API_KEY not set")
 
     adapter = AnthropicAdapter(api_key=api_key)
-    
+
     # Pre-flight check
     try:
         await adapter.decompose("test", 1)
@@ -25,7 +27,7 @@ async def test_anthropic_integration():
         initial_prompt="The future of sustainable energy",
         depth_limit=1,
         branching_factor=2,
-        adapter=adapter
+        adapter=adapter,
     )
     engine = HydraEngine(config)
     root = await engine.run()

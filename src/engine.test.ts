@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { HydraEngine } from "./engine";
 import { MockAdapter } from "./mock_adapter";
 
@@ -26,10 +26,10 @@ describe("HydraEngine", () => {
 
     const root = await engine.run();
     expect(root.children).toHaveLength(3);
-    
+
     let totalNodes = 1; // root
     totalNodes += root.children.length;
-    
+
     expect(totalNodes).toBe(4);
   });
 
@@ -72,7 +72,7 @@ describe("HydraEngine", () => {
       }
     }
 
-    const engine = new HydraEngine({
+    const _engine = new HydraEngine({
       initialPrompt: "Root",
       depthLimit: 2,
       branchingFactor: 2,
@@ -89,7 +89,7 @@ describe("HydraEngine", () => {
       if (callCount === 1) {
         return {
           subtopics: ["SuccessTopic", "FailMeTopic"],
-          metadata: { tokens: 10, model: "test", latency_ms: 10 }
+          metadata: { tokens: 10, model: "test", latency_ms: 10 },
         };
       }
       return originalDecompose(topic, breadth);
@@ -103,13 +103,13 @@ describe("HydraEngine", () => {
     });
 
     const root = await engineWithMock.run();
-    
+
     expect(root.status).toBe("success");
     expect(root.children).toHaveLength(2);
-    
-    const successBranch = root.children.find(c => c.topic === "SuccessTopic");
-    const failBranch = root.children.find(c => c.topic === "FailMeTopic");
-    
+
+    const successBranch = root.children.find((c) => c.topic === "SuccessTopic");
+    const failBranch = root.children.find((c) => c.topic === "FailMeTopic");
+
     expect(successBranch?.status).toBe("success");
     expect(failBranch?.status).toBe("failed");
     expect(failBranch?.children).toHaveLength(0);

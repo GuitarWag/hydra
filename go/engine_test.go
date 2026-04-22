@@ -112,7 +112,7 @@ func (a *CustomFailAdapter) Decompose(topic string, breadth int) (*DecomposerRes
 	if topic == "Root" {
 		return &DecomposerResponse{
 			Subtopics: []string{"SuccessTopic", "FailMeTopic"},
-			Metadata: NodeMetadata{Tokens: 10, Model: "test", LatencyMS: 10},
+			Metadata:  NodeMetadata{Tokens: 10, Model: "test", LatencyMS: 10},
 		}, nil
 	}
 	return a.MockAdapter.Decompose(topic, breadth)

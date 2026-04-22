@@ -6,7 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
+	"runtime"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,7 +20,7 @@ type AnthropicAdapter struct {
 	Model  string
 }
 
-func NewAnthropicAdapter(apiKey string, model string) *AnthropicAdapter {
+func NewAnthropicAdapter(apiKey, model string) *AnthropicAdapter {
 	if model == "" {
 		model = "claude-haiku-4-5-20251001"
 	}
@@ -47,10 +52,26 @@ type anthropicResponse struct {
 	} `json:"usage"`
 }
 
+func loadDecomposePrompt() (string, error) {
+	_, srcFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("unable to determine source file path")
+	}
+	promptPath := filepath.Join(filepath.Dir(srcFile), "..", "protocol", "decompose.prompt")
+	data, err := os.ReadFile(promptPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read decompose prompt: %w", err)
+	}
+	return string(data), nil
+}
+
 func (a *AnthropicAdapter) Decompose(topic string, breadth int) (*DecomposerResponse, error) {
-	prompt := fmt.Sprintf(`Decompose the topic "%s" into exactly %d sub-items.
-Return ONLY a JSON object with a "subtopics" key containing an array of strings.
-Example: {"subtopics": ["item1", "item2"]}`, topic, breadth)
+	tmpl, err := loadDecomposePrompt()
+	if err != nil {
+		return nil, err
+	}
+	prompt := strings.Replace(tmpl, "{{BREADTH}}", strconv.Itoa(breadth), 1)
+	prompt = strings.Replace(prompt, "{{TOPIC}}", topic, 1)
 
 	reqBody := anthropicRequest{
 		Model:     a.Model,
@@ -103,7 +124,7 @@ Example: {"subtopics": ["item1", "item2"]}`, topic, breadth)
 	}
 
 	text := anthropicResp.Content[0].Text
-	
+
 	// Basic JSON extraction
 	re := regexp.MustCompile(`\{[\s\S]*\}`)
 	match := re.FindString(text)

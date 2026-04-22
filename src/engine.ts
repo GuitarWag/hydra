@@ -1,5 +1,5 @@
-import { randomUUID } from "crypto";
-import { HydraNode, Adapter } from "./types";
+import { randomUUID } from "node:crypto";
+import type { Adapter, HydraNode } from "./types";
 
 export interface HydraConfig {
   initialPrompt: string;
@@ -43,17 +43,17 @@ export class HydraEngine {
       node.metadata.latency_ms = end - start;
 
       const childPromises = response.subtopics.map((subtopic) =>
-        this.expand(subtopic, currentDepth + 1)
+        this.expand(subtopic, currentDepth + 1),
       );
 
       // FR-4.2: Partial Failure handling
       // We use Promise.all and allow individual expand calls to handle their own errors
       node.children = await Promise.all(childPromises);
-      node.status = node.children.some(c => c.status === "failed") ? "success" : "success"; 
-      // Actually, if we got here, the decomposition succeeded. 
+      node.status = node.children.some((c) => c.status === "failed") ? "success" : "success";
+      // Actually, if we got here, the decomposition succeeded.
       // Individual children will have their own status.
       node.status = "success";
-    } catch (error: any) {
+    } catch {
       node.status = "failed";
     }
 

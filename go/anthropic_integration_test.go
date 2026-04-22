@@ -13,7 +13,7 @@ func TestAnthropicIntegration(t *testing.T) {
 	}
 
 	adapter := NewAnthropicAdapter(apiKey, "claude-haiku-4-5-20251001")
-	
+
 	t.Run("Pre-flight check and decomposition", func(t *testing.T) {
 		engine := NewHydraEngine(HydraConfig{
 			InitialPrompt:   "The future of sustainable energy",

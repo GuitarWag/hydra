@@ -1,6 +1,6 @@
 # Board: My Board
 > Description: Task management board
-> Created: 2026-04-22T14:10:10.807Z | Updated: 2026-04-22T20:45:03.480Z
+> Created: 2026-04-22T14:10:10.807Z | Updated: 2026-04-22T23:08:35.016Z
 
 ## TODO
 
@@ -12,6 +12,24 @@ _No tasks_
 
 ## DONE
 
+- [x] [T-MOAMWGQK-80B] **Update CLAUDE.md and README with new tooling** `priority:low`
+  > After all tooling lands, update CLAUDE.md with lint/format commands for each language (biome, ruff, golangci-lint) and mise setup. Update README prerequisites to mention mise. Add Development section covering linting across all three languages.
+  > Created: 2026-04-22T22:38:34.172Z | Updated: 2026-04-22T23:08:35.016Z
+- [x] [T-MOAMWGOW-42Z] **Add golangci-lint for Go linting** `priority:medium`
+  > Create .golangci.yml in go/ with industry-standard linters: govet, errcheck, staticcheck, unused, gosimple, ineffassign, gocritic, gofmt. Fix any existing violations in go/*.go.
+  > Created: 2026-04-22T22:38:34.112Z | Updated: 2026-04-22T23:06:00.111Z
+- [x] [T-MOAMWGN6-RUQ] **Add Biome for TypeScript linting and formatting** `priority:medium`
+  > Install @biomejs/biome as devDep. Create biome.json config at root with sensible defaults matching existing style. Add npm scripts: lint, lint:fix, format. Fix any existing violations in src/*.ts and vitest.config.ts. Biome replaces ESLint + Prettier.
+  > Created: 2026-04-22T22:38:34.050Z | Updated: 2026-04-22T23:02:46.786Z
+- [x] [T-MOAMWGO1-MHP] **Add Ruff for Python linting and formatting** `priority:medium`
+  > Add pyproject.toml at python/ with [tool.ruff] config: line-length 100, target py312+, enable E/F/I/UP/B/SIM rules. Add ruff to venv dev deps. Fix any existing violations in python/*.py. Ruff replaces flake8, isort, and black.
+  > Created: 2026-04-22T22:38:34.081Z | Updated: 2026-04-22T22:55:28.530Z
+- [x] [T-MOAMWAUA-JZE] **Extract shared decompose prompt to protocol/decompose.prompt** `priority:high`
+  > Decompose prompt is duplicated across go/anthropic_adapter.go, src/anthropic_adapter.ts, python/anthropic_adapter.py. Go version has improved orthogonality instructions but TS and Python still have the old basic prompt. Create shared template at protocol/decompose.prompt with placeholders. Update all three adapters to load from this file.
+  > Created: 2026-04-22T22:38:26.530Z | Updated: 2026-04-22T22:47:43.633Z
+- [x] [T-MOAMWGPR-CVK] **Add mise config for dev environment setup** `priority:medium`
+  > Create mise.toml at project root. Pin: node 22.x, go 1.26.x, python 3.12+. Declare mise tasks: test (all three), lint (all three), setup (npm install + go mod download + venv + pip install). Load .env via mise. Single mise install and mise run setup to get running.
+  > Created: 2026-04-22T22:38:34.143Z | Updated: 2026-04-22T22:44:39.581Z
 - [x] [T-MOA7O0V1-HFE] **Protocol: Implement Shared JSON Schema (Source of Truth)** `priority:medium`
   > Created: 2026-04-22T15:32:06.109Z | Updated: 2026-04-22T20:45:03.480Z
 - [x] [T-MOA7O0QR-WUA] **QA: Python Implementation** `priority:medium`
