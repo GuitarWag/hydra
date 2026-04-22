@@ -1,31 +1,33 @@
 # Board: My Board
 > Description: Task management board
-> Created: 2026-04-22T14:10:10.807Z | Updated: 2026-04-22T15:32:34.111Z
+> Created: 2026-04-22T14:10:10.807Z | Updated: 2026-04-22T20:45:03.480Z
 
 ## TODO
 
-- [ ] [T-MOA7O0P3-628] **QA: TypeScript Implementation** `priority:medium`
-  > Created: 2026-04-22T15:32:05.895Z | Updated: 2026-04-22T15:32:05.895Z
-- [ ] [T-MOA7O0PX-TNE] **QA: Go Implementation** `priority:medium`
-  > Created: 2026-04-22T15:32:05.925Z | Updated: 2026-04-22T15:32:05.925Z
-- [ ] [T-MOA7O0QR-WUA] **QA: Python Implementation** `priority:medium`
-  > Created: 2026-04-22T15:32:05.955Z | Updated: 2026-04-22T15:32:05.955Z
-- [ ] [T-MOA7O0RM-M3Z] **Security: Dependency & API Key Audit (All Languages)** `priority:medium`
-  > Created: 2026-04-22T15:32:05.986Z | Updated: 2026-04-22T15:32:05.986Z
-- [ ] [T-MOA7O0SH-O3B] **Code Review: TypeScript Architecture** `priority:medium`
-  > Created: 2026-04-22T15:32:06.017Z | Updated: 2026-04-22T15:32:06.017Z
-- [ ] [T-MOA7O0TB-MOY] **Code Review: Go Concurrency Patterns** `priority:medium`
-  > Created: 2026-04-22T15:32:06.047Z | Updated: 2026-04-22T15:32:06.047Z
-- [ ] [T-MOA7O0U6-37G] **Code Review: Python Asyncio & Pydantic Usage** `priority:medium`
-  > Created: 2026-04-22T15:32:06.078Z | Updated: 2026-04-22T15:32:06.078Z
+_No tasks_
 
 ## IN PROGRESS
 
-- [>] [T-MOA7O0V1-HFE] **Protocol: Implement Shared JSON Schema (Source of Truth)** `priority:medium`
-  > Created: 2026-04-22T15:32:06.109Z | Updated: 2026-04-22T15:32:34.111Z
+_No tasks_
 
 ## DONE
 
+- [x] [T-MOA7O0V1-HFE] **Protocol: Implement Shared JSON Schema (Source of Truth)** `priority:medium`
+  > Created: 2026-04-22T15:32:06.109Z | Updated: 2026-04-22T20:45:03.480Z
+- [x] [T-MOA7O0QR-WUA] **QA: Python Implementation** `priority:medium`
+  > Created: 2026-04-22T15:32:05.955Z | Updated: 2026-04-22T20:33:57.356Z
+- [x] [T-MOA7O0PX-TNE] **QA: Go Implementation** `priority:medium`
+  > Created: 2026-04-22T15:32:05.925Z | Updated: 2026-04-22T20:33:57.326Z
+- [x] [T-MOA7O0P3-628] **QA: TypeScript Implementation** `priority:medium`
+  > Created: 2026-04-22T15:32:05.895Z | Updated: 2026-04-22T20:33:57.297Z
+- [x] [T-MOA7O0RM-M3Z] **Security: Dependency & API Key Audit (All Languages)** `priority:medium`
+  > Created: 2026-04-22T15:32:05.986Z | Updated: 2026-04-22T20:33:41.178Z
+- [x] [T-MOA7O0U6-37G] **Code Review: Python Asyncio & Pydantic Usage** `priority:medium`
+  > Created: 2026-04-22T15:32:06.078Z | Updated: 2026-04-22T18:57:30.106Z
+- [x] [T-MOA7O0TB-MOY] **Code Review: Go Concurrency Patterns** `priority:medium`
+  > Created: 2026-04-22T15:32:06.047Z | Updated: 2026-04-22T18:53:29.758Z
+- [x] [T-MOA7O0SH-O3B] **Code Review: TypeScript Architecture** `priority:medium`
+  > Created: 2026-04-22T15:32:06.017Z | Updated: 2026-04-22T18:50:18.036Z
 - [x] [T-MOA4QV5T-6XZ] **Step 3: Python Port - Core Engine and Parity Tests** `priority:medium`
   > Created: 2026-04-22T14:10:19.841Z | Updated: 2026-04-22T15:30:18.578Z
 - [x] [T-MOA7J5ML-M7S] **Python: AnthropicAdapter (Haiku 4.5)** `priority:medium`
