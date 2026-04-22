@@ -1,0 +1,11 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "topic": "Build a minimal example",
+  "depth": 0,
+  "children": [],
+  "metadata": {
+    "tokens": 100,
+    "model": "gpt-4",
+    "latency_ms": 250
+  }
+}

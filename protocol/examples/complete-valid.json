@@ -1,0 +1,13 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "topic": "Build a web application",
+  "depth": 0,
+  "children": [],
+  "resolution": "Successfully completed the web application with all features",
+  "metadata": {
+    "tokens": 200,
+    "model": "gpt-4-turbo",
+    "latency_ms": 450
+  },
+  "status": "success"
+}

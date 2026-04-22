@@ -1,0 +1,77 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "topic": "Build a web application",
+  "depth": 0,
+  "children": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "topic": "Design database schema",
+      "depth": 1,
+      "children": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440010",
+          "topic": "Define user table",
+          "depth": 2,
+          "children": [],
+          "resolution": "Created users table with id, email, password_hash, created_at",
+          "metadata": {
+            "tokens": 80,
+            "model": "gpt-4",
+            "latency_ms": 180
+          },
+          "status": "success"
+        },
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440011",
+          "topic": "Define posts table",
+          "depth": 2,
+          "children": [],
+          "resolution": "Created posts table with id, user_id, title, content, created_at",
+          "metadata": {
+            "tokens": 75,
+            "model": "gpt-4",
+            "latency_ms": 165
+          },
+          "status": "success"
+        }
+      ],
+      "resolution": "Database schema designed with users and posts tables",
+      "metadata": {
+        "tokens": 150,
+        "model": "gpt-4",
+        "latency_ms": 320
+      },
+      "status": "success"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "topic": "Create API endpoints",
+      "depth": 1,
+      "children": [],
+      "resolution": "Implemented REST API with authentication and CRUD operations",
+      "metadata": {
+        "tokens": 180,
+        "model": "gpt-4",
+        "latency_ms": 400
+      },
+      "status": "success"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "topic": "Build frontend components",
+      "depth": 1,
+      "children": [],
+      "resolution": null,
+      "metadata": {
+        "tokens": 120,
+        "model": "gpt-4",
+        "latency_ms": 280
+      }
+    }
+  ],
+  "metadata": {
+    "tokens": 500,
+    "model": "gpt-4",
+    "latency_ms": 1200
+  }
+}
