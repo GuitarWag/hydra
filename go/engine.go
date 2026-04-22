@@ -1,0 +1,78 @@
+package hydra
+
+import (
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type HydraConfig struct {
+	InitialPrompt   string
+	DepthLimit      int
+	BranchingFactor int
+	Adapter         Adapter
+}
+
+type HydraEngine struct {
+	config HydraConfig
+}
+
+func NewHydraEngine(config HydraConfig) *HydraEngine {
+	return &HydraEngine{config: config}
+}
+
+func (e *HydraEngine) Run() (*HydraNode, error) {
+	return e.expand(e.config.InitialPrompt, 0), nil
+}
+
+func (e *HydraEngine) expand(topic string, currentDepth int) *HydraNode {
+	node := &HydraNode{
+		ID:    uuid.New().String(),
+		Topic: topic,
+		Depth: currentDepth,
+		Metadata: NodeMetadata{
+			Model: e.config.Adapter.GetModelName(),
+		},
+		Children: []*HydraNode{},
+	}
+
+	if currentDepth >= e.config.DepthLimit {
+		node.Status = "success"
+		return node
+	}
+
+	start := time.Now()
+	response, err := e.config.Adapter.Decompose(topic, e.config.BranchingFactor)
+	latency := int(time.Since(start).Milliseconds())
+
+	if err != nil {
+		node.Status = "failed"
+		return node
+	}
+
+	node.Metadata.Tokens = response.Metadata.Tokens
+	node.Metadata.LatencyMS = latency
+
+	var wg sync.WaitGroup
+	childChan := make(chan *HydraNode, len(response.Subtopics))
+
+	for _, subtopic := range response.Subtopics {
+		wg.Add(1)
+		go func(st string) {
+			defer wg.Done()
+			childChan <- e.expand(st, currentDepth+1)
+		}(subtopic)
+	}
+
+	// Wait for all branches in parallel
+	wg.Wait()
+	close(childChan)
+
+	for child := range childChan {
+		node.Children = append(node.Children, child)
+	}
+
+	node.Status = "success"
+	return node
+}

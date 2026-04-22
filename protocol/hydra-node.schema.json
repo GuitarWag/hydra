@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HydraNode",
+  "description": "A node in the Hydra recursive decomposition tree",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "topic": {
+      "type": "string"
+    },
+    "depth": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "children": {
+      "type": "array",
+      "items": { "$ref": "#" }
+    },
+    "resolution": {
+      "type": ["string", "null"]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "tokens": { "type": "integer" },
+        "model": { "type": "string" },
+        "latency_ms": { "type": "integer" }
+      },
+      "required": ["tokens", "model", "latency_ms"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "failed"]
+    }
+  },
+  "required": ["id", "topic", "depth", "children", "metadata"]
+}
