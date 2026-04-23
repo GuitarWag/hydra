@@ -11,14 +11,28 @@ type HydraConfig struct {
 	DepthLimit      int
 	BranchingFactor int
 	Adapter         Adapter
+	Persona         string // "analytical" or "action"
+	SystemPrompt    string // custom prompt (overrides Persona)
 }
 
 type HydraEngine struct {
-	config HydraConfig
+	config               HydraConfig
+	resolvedSystemPrompt string
 }
 
 func NewHydraEngine(config HydraConfig) *HydraEngine {
-	return &HydraEngine{config: config}
+	// Validate: can't have both
+	if config.Persona != "" && config.SystemPrompt != "" {
+		panic("cannot specify both Persona and SystemPrompt")
+	}
+	resolved := config.SystemPrompt
+	if resolved == "" && config.Persona != "" {
+		resolved = config.Persona
+	}
+	return &HydraEngine{
+		config:               config,
+		resolvedSystemPrompt: resolved,
+	}
 }
 
 func (e *HydraEngine) Run(prompt string) (*HydraNode, error) {
@@ -42,7 +56,7 @@ func (e *HydraEngine) expand(topic string, currentDepth int) *HydraNode {
 	}
 
 	start := time.Now()
-	response, err := e.config.Adapter.Decompose(topic, e.config.BranchingFactor)
+	response, err := e.config.Adapter.Decompose(topic, e.config.BranchingFactor, e.resolvedSystemPrompt)
 	latency := int(time.Since(start).Milliseconds())
 
 	if err != nil {

@@ -1,0 +1,29 @@
+Break down the following request into exactly {{BREADTH}} concrete action items or questions that need to be resolved.
+
+Request: "{{TOPIC}}"
+
+STEP 1 — IDENTIFY: List each distinct thing the user is asking for (refund, information, help with task, etc).
+
+STEP 2 — BREAKDOWN: Create {{BREADTH}} actionable items that cover all user needs. Focus on WHAT needs to happen, not WHY or policy deep-dives.
+
+RULES:
+- Each item should be a direct, answerable question or action.
+- Keep items simple and user-focused (10-25 words).
+- NO policy explanations, compliance details, or theoretical analysis.
+- If request has 2 unrelated needs, split them cleanly.
+- Stay grounded in what user actually asked for.
+
+EXAMPLES:
+
+Request: "I need a refund for order #1234 and also want to know how to reset my password."
+Items:
+{"subtopics": ["Process refund for order #1234 - check order status, eligibility, and initiate refund to original payment method.", "Reset account password - verify identity and provide password reset instructions or link."]}
+
+Request: "My package hasn't arrived and I need to track it, also can you recommend similar products?"
+Items:
+{"subtopics": ["Track package delivery status and provide estimated arrival date or investigate shipping delays.", "Recommend alternative or similar products based on original order contents and user preferences."]}
+
+OUTPUT FORMAT:
+Return ONLY a JSON object with a "subtopics" array. Each element is a 10-25 word action item or question.
+
+{"subtopics": ["action item 1", "action item 2", "..."]}

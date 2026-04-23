@@ -6,7 +6,7 @@ class MockAdapter(Adapter):
     def __init__(self, model_name: str = "mock-model"):
         self.model_name = model_name
 
-    async def decompose(self, topic: str, breadth: int) -> DecomposerResponse:
+    async def decompose(self, topic: str, breadth: int, system_prompt: str = None) -> DecomposerResponse:
         if "FailMe" in topic:
             raise Exception("Simulated failure")
 

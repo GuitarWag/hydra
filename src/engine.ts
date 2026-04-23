@@ -5,10 +5,20 @@ export interface HydraConfig {
   depthLimit: number;
   branchingFactor: number;
   adapter: Adapter;
+  persona?: "analytical" | "action";
+  systemPrompt?: string;
 }
 
 export class HydraEngine {
-  constructor(private config: HydraConfig) {}
+  private resolvedSystemPrompt: string | undefined;
+
+  constructor(private config: HydraConfig) {
+    // Validate: can't have both
+    if (this.config.persona && this.config.systemPrompt) {
+      throw new Error("Cannot specify both persona and systemPrompt");
+    }
+    this.resolvedSystemPrompt = this.config.systemPrompt || this.config.persona;
+  }
 
   async run(prompt: string): Promise<HydraNode> {
     return this.expand(prompt, 0);
@@ -35,7 +45,11 @@ export class HydraEngine {
 
     try {
       const start = Date.now();
-      const response = await this.config.adapter.decompose(topic, this.config.branchingFactor);
+      const response = await this.config.adapter.decompose(
+        topic,
+        this.config.branchingFactor,
+        this.resolvedSystemPrompt,
+      );
       const end = Date.now();
 
       node.metadata.tokens = response.metadata.tokens;

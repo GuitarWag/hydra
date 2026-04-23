@@ -22,6 +22,6 @@ export interface DecomposerResponse {
 }
 
 export interface Adapter {
-  decompose(topic: string, breadth: number): Promise<DecomposerResponse>;
+  decompose(topic: string, breadth: number, systemPrompt?: string): Promise<DecomposerResponse>;
   getModelName(): string;
 }

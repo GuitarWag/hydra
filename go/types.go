@@ -22,6 +22,6 @@ type DecomposerResponse struct {
 }
 
 type Adapter interface {
-	Decompose(topic string, breadth int) (*DecomposerResponse, error)
+	Decompose(topic string, breadth int, systemPrompt string) (*DecomposerResponse, error)
 	GetModelName() string
 }

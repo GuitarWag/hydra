@@ -31,6 +31,12 @@ var evalCases = []EvalCase{
 		ExpectedTopics: []string{"remote work", "productivity", "mental health"},
 		MinSubtopics:   2,
 	},
+	{
+		Name:           "Customer support multi-topic",
+		Prompt:         "I need a refund for order #1234 and also want to know how to reset my password.",
+		ExpectedTopics: []string{"refund", "order", "password", "reset"},
+		MinSubtopics:   2,
+	},
 }
 
 type JudgeVerdict struct {
@@ -184,11 +190,17 @@ func TestEvalDecomposition(t *testing.T) {
 
 	for _, tc := range evalCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			engine := NewHydraEngine(HydraConfig{
+			config := HydraConfig{
 				DepthLimit:      1,
 				BranchingFactor: 4,
 				Adapter:         adapter,
-			})
+			}
+			// Use action persona + lower branching for customer support
+			if tc.Name == "Customer support multi-topic" {
+				config.Persona = "action"
+				config.BranchingFactor = 2
+			}
+			engine := NewHydraEngine(config)
 
 			root, err := engine.Run(tc.Prompt)
 			if err != nil {

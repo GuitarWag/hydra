@@ -9,7 +9,7 @@ type MockAdapter struct {
 	ModelName string
 }
 
-func (a *MockAdapter) Decompose(topic string, breadth int) (*DecomposerResponse, error) {
+func (a *MockAdapter) Decompose(topic string, breadth int, _ string) (*DecomposerResponse, error) {
 	if strings.Contains(topic, "FailMe") {
 		return nil, fmt.Errorf("simulated failure")
 	}

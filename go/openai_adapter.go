@@ -51,8 +51,8 @@ type openAIChatResponse struct {
 	} `json:"usage"`
 }
 
-func (a *OpenAIAdapter) Decompose(topic string, breadth int) (*DecomposerResponse, error) {
-	tmpl, err := loadDecomposePrompt()
+func (a *OpenAIAdapter) Decompose(topic string, breadth int, systemPrompt string) (*DecomposerResponse, error) {
+	tmpl, err := loadDecomposePrompt(systemPrompt)
 	if err != nil {
 		return nil, err
 	}

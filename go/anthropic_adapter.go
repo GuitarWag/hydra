@@ -51,12 +51,24 @@ type anthropicResponse struct {
 	} `json:"usage"`
 }
 
-func loadDecomposePrompt() (string, error) {
+func loadDecomposePrompt(systemPrompt string) (string, error) {
 	_, srcFile, _, ok := runtime.Caller(0)
 	if !ok {
 		return "", fmt.Errorf("unable to determine source file path")
 	}
-	promptPath := filepath.Join(filepath.Dir(srcFile), "..", "protocol", "decompose.prompt")
+
+	var promptPath string
+	if systemPrompt == "" {
+		// Default: analytical
+		promptPath = filepath.Join(filepath.Dir(srcFile), "..", "protocol", "prompts", "analytical.txt")
+	} else if systemPrompt == "analytical" || systemPrompt == "action" {
+		// Persona shortcut
+		promptPath = filepath.Join(filepath.Dir(srcFile), "..", "protocol", "prompts", systemPrompt+".txt")
+	} else {
+		// Custom prompt passed directly
+		return systemPrompt, nil
+	}
+
 	data, err := os.ReadFile(promptPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read decompose prompt: %w", err)
@@ -64,8 +76,8 @@ func loadDecomposePrompt() (string, error) {
 	return string(data), nil
 }
 
-func (a *AnthropicAdapter) Decompose(topic string, breadth int) (*DecomposerResponse, error) {
-	tmpl, err := loadDecomposePrompt()
+func (a *AnthropicAdapter) Decompose(topic string, breadth int, systemPrompt string) (*DecomposerResponse, error) {
+	tmpl, err := loadDecomposePrompt(systemPrompt)
 	if err != nil {
 		return nil, err
 	}

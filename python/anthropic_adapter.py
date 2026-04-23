@@ -13,9 +13,19 @@ class AnthropicAdapter(Adapter):
         self.client = AsyncAnthropic(api_key=api_key)
         self.model = model
 
-    async def decompose(self, topic: str, breadth: int) -> DecomposerResponse:
-        prompt_path = Path(__file__).parent / ".." / "protocol" / "decompose.prompt"
-        tmpl = prompt_path.read_text(encoding="utf-8")
+    async def decompose(self, topic: str, breadth: int, system_prompt: str = None) -> DecomposerResponse:
+        if system_prompt:
+            # Custom or persona
+            if system_prompt in ("analytical", "action"):
+                prompt_path = Path(__file__).parent / ".." / "protocol" / "prompts" / f"{system_prompt}.txt"
+                tmpl = prompt_path.read_text(encoding="utf-8")
+            else:
+                tmpl = system_prompt
+        else:
+            # Default: analytical
+            prompt_path = Path(__file__).parent / ".." / "protocol" / "prompts" / "analytical.txt"
+            tmpl = prompt_path.read_text(encoding="utf-8")
+
         prompt = tmpl.replace("{{BREADTH}}", str(breadth)).replace("{{TOPIC}}", topic)
 
         start_ms = _monotonic_ms()

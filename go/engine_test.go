@@ -103,12 +103,12 @@ type CustomFailAdapter struct {
 	*MockAdapter
 }
 
-func (a *CustomFailAdapter) Decompose(topic string, breadth int) (*DecomposerResponse, error) {
+func (a *CustomFailAdapter) Decompose(topic string, breadth int, systemPrompt string) (*DecomposerResponse, error) {
 	if topic == "Root" {
 		return &DecomposerResponse{
 			Subtopics: []string{"SuccessTopic", "FailMeTopic"},
 			Metadata:  NodeMetadata{Tokens: 10, Model: "test", LatencyMS: 10},
 		}, nil
 	}
-	return a.MockAdapter.Decompose(topic, breadth)
+	return a.MockAdapter.Decompose(topic, breadth, systemPrompt)
 }
