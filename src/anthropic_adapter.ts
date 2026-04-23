@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
+import { extractJson } from "./json_repair";
 import type { Adapter, DecomposerResponse } from "./types";
 
 export class AnthropicAdapter implements Adapter {
@@ -26,22 +27,16 @@ export class AnthropicAdapter implements Adapter {
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";
 
-    try {
-      // Basic JSON extraction if there's markdown fluff
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+    const data = extractJson<{ subtopics: string[] }>(text);
 
-      return {
-        subtopics: data.subtopics.slice(0, breadth),
-        metadata: {
-          tokens: response.usage.input_tokens + response.usage.output_tokens,
-          model: this.model,
-          latency_ms: end - start,
-        },
-      };
-    } catch (e) {
-      throw new Error(`Failed to parse Anthropic response: ${e instanceof Error ? e.message : e}`);
-    }
+    return {
+      subtopics: data.subtopics.slice(0, breadth),
+      metadata: {
+        tokens: response.usage.input_tokens + response.usage.output_tokens,
+        model: this.model,
+        latency_ms: end - start,
+      },
+    };
   }
 
   getModelName(): string {

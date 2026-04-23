@@ -204,6 +204,13 @@ func collectSubtopics(node *HydraNode) []string {
 	return topics
 }
 
+func adapterForModel(model, anthropicKey, openaiKey, openaiBaseURL string) Adapter {
+	if strings.HasPrefix(model, "claude-") {
+		return NewAnthropicAdapter(anthropicKey, model)
+	}
+	return NewOpenAIAdapter(openaiKey, model, openaiBaseURL)
+}
+
 func TestEvalDecomposition(t *testing.T) {
 	apiKey := os.Getenv("ANTHROPIC_API_KEY")
 	if apiKey == "" {
@@ -212,11 +219,13 @@ func TestEvalDecomposition(t *testing.T) {
 
 	evalModel := getEnvOrDefault("HYDRA_EVAL_MODEL", "claude-haiku-4-5-20251001")
 	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-haiku-4-5-20251001")
+	openaiKey := os.Getenv("OPENAI_API_KEY")
+	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
 
 	t.Logf("Decomposer model: %s", evalModel)
 	t.Logf("Judge model: %s", judgeModel)
 
-	adapter := NewAnthropicAdapter(apiKey, evalModel)
+	adapter := adapterForModel(evalModel, apiKey, openaiKey, openaiBaseURL)
 
 	passed := 0
 	failed := 0
@@ -261,4 +270,107 @@ func TestEvalDecomposition(t *testing.T) {
 	}
 
 	t.Logf("\n=== EVAL SUMMARY: %d/10 passed, %d/10 failed ===", passed, failed)
+}
+
+func TestEvalMatrix(t *testing.T) {
+	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
+	openaiKey := os.Getenv("OPENAI_API_KEY")
+	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
+
+	modelsEnv := os.Getenv("HYDRA_EVAL_MODELS")
+	if modelsEnv == "" {
+		t.Skip("HYDRA_EVAL_MODELS not set (comma-separated model list), skipping matrix eval")
+	}
+
+	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-haiku-4-5-20251001")
+	if anthropicKey == "" {
+		t.Skip("ANTHROPIC_API_KEY not set (needed for judge), skipping matrix eval")
+	}
+
+	models := strings.Split(modelsEnv, ",")
+	for i := range models {
+		models[i] = strings.TrimSpace(models[i])
+	}
+
+	type ModelResult struct {
+		Model                                                string
+		Passed, Failed                                       int
+		AvgCoverage, AvgDistinctness, AvgRelevance, AvgGran float64
+	}
+
+	var results []ModelResult
+
+	for _, model := range models {
+		t.Run(model, func(t *testing.T) {
+			adapter := adapterForModel(model, anthropicKey, openaiKey, openaiBaseURL)
+
+			passed, failed := 0, 0
+			totalCov, totalDist, totalRel, totalGran := 0, 0, 0, 0
+
+			for _, tc := range evalCases {
+				t.Run(tc.Name, func(t *testing.T) {
+					engine := NewHydraEngine(HydraConfig{
+						InitialPrompt:   tc.Prompt,
+						DepthLimit:      1,
+						BranchingFactor: 4,
+						Adapter:         adapter,
+					})
+
+					root, err := engine.Run()
+					if err != nil {
+						t.Fatalf("engine failed: %v", err)
+					}
+
+					subtopics := collectSubtopics(root)
+					t.Logf("Subtopics: %v", subtopics)
+
+					verdict, err := callJudge(anthropicKey, judgeModel, tc.Prompt, subtopics, tc.ExpectedTopics)
+					if err != nil {
+						t.Fatalf("judge call failed: %v", err)
+					}
+
+					t.Logf("Scores — coverage:%d distinctness:%d relevance:%d granularity:%d",
+						verdict.Coverage, verdict.Distinctness, verdict.Relevance, verdict.Granularity)
+
+					totalCov += verdict.Coverage
+					totalDist += verdict.Distinctness
+					totalRel += verdict.Relevance
+					totalGran += verdict.Granularity
+
+					if !verdict.Pass {
+						failed++
+						t.Errorf("FAIL: %s", verdict.Reasoning)
+					} else {
+						passed++
+					}
+				})
+			}
+
+			n := float64(len(evalCases))
+			result := ModelResult{
+				Model:           model,
+				Passed:          passed,
+				Failed:          failed,
+				AvgCoverage:     float64(totalCov) / n,
+				AvgDistinctness: float64(totalDist) / n,
+				AvgRelevance:    float64(totalRel) / n,
+				AvgGran:         float64(totalGran) / n,
+			}
+			results = append(results, result)
+
+			t.Logf("\n=== %s: %d/10 passed | avg cov:%.1f dist:%.1f rel:%.1f gran:%.1f ===",
+				model, passed, result.AvgCoverage, result.AvgDistinctness, result.AvgRelevance, result.AvgGran)
+		})
+	}
+
+	t.Log("\n╔══════════════════════════════════════════════════════════════════════════╗")
+	t.Log("║                         EVAL MATRIX RESULTS                            ║")
+	t.Log("╠══════════════════════════════════════════════════════════════════════════╣")
+	t.Logf("║ %-30s │ Pass │ Cov  │ Dist │ Rel  │ Gran ║", "Model")
+	t.Log("╠──────────────────────────────────────────────────────────────────────────╣")
+	for _, r := range results {
+		t.Logf("║ %-30s │ %2d/10│ %3.1f  │ %3.1f  │ %3.1f  │ %3.1f  ║",
+			r.Model, r.Passed, r.AvgCoverage, r.AvgDistinctness, r.AvgRelevance, r.AvgGran)
+	}
+	t.Log("╚══════════════════════════════════════════════════════════════════════════╝")
 }

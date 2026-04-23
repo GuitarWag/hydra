@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -125,18 +124,11 @@ func (a *AnthropicAdapter) Decompose(topic string, breadth int) (*DecomposerResp
 
 	text := anthropicResp.Content[0].Text
 
-	// Basic JSON extraction
-	re := regexp.MustCompile(`\{[\s\S]*\}`)
-	match := re.FindString(text)
-	if match == "" {
-		match = text
-	}
-
 	var data struct {
 		Subtopics []string `json:"subtopics"`
 	}
-	if err := json.Unmarshal([]byte(match), &data); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON from response: %v", err)
+	if err := ExtractJSON(text, &data); err != nil {
+		return nil, fmt.Errorf("failed to extract JSON from response: %w", err)
 	}
 
 	// Truncate to breadth if necessary

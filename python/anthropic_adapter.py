@@ -1,10 +1,10 @@
-import re
 import time
 from pathlib import Path
 
 from anthropic import AsyncAnthropic
 
 from engine import Adapter
+from json_repair import extract_json
 from models import DecomposerResponse, NodeMetadata
 
 
@@ -18,35 +18,28 @@ class AnthropicAdapter(Adapter):
         tmpl = prompt_path.read_text(encoding="utf-8")
         prompt = tmpl.replace("{{BREADTH}}", str(breadth)).replace("{{TOPIC}}", topic)
 
-        start_time = time.time()
+        start_ms = _monotonic_ms()
         response = await self.client.messages.create(
             model=self.model, max_tokens=1024, messages=[{"role": "user", "content": prompt}]
         )
-        end_time = time.time()
-        latency_ms = int((end_time - start_time) * 1000)
+        latency_ms = _monotonic_ms() - start_ms
 
         text = response.content[0].text
+        data = extract_json(text)
+        subtopics = data.get("subtopics", [])[:breadth]
 
-        # Basic JSON extraction
-        match = re.search(r"\{[\s\S]*\}", text)
-        json_text = match.group(0) if match else text
-
-        import json
-
-        try:
-            data = json.loads(json_text)
-            subtopics = data.get("subtopics", [])[:breadth]
-
-            return DecomposerResponse(
-                subtopics=subtopics,
-                metadata=NodeMetadata(
-                    tokens=response.usage.input_tokens + response.usage.output_tokens,
-                    model=self.model,
-                    latency_ms=latency_ms,
-                ),
-            )
-        except Exception as e:
-            raise Exception(f"Failed to parse Anthropic response: {text}") from e
+        return DecomposerResponse(
+            subtopics=subtopics,
+            metadata=NodeMetadata(
+                tokens=response.usage.input_tokens + response.usage.output_tokens,
+                model=self.model,
+                latency_ms=latency_ms,
+            ),
+        )
 
     def get_model_name(self) -> str:
         return self.model
+
+
+def _monotonic_ms() -> int:
+    return int(time.monotonic() * 1000)

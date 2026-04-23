@@ -56,6 +56,10 @@ run = "cd go && go test -skip TestEvalDecomposition ./..."
 description = "Run Go LLM-as-judge evals (needs ANTHROPIC_API_KEY)"
 run = "cd go && go test -v -run TestEvalDecomposition -timeout 300s ./..."
 
+[tasks."eval:matrix"]
+description = "Run evals across multiple models (set HYDRA_EVAL_MODELS=model1,model2,...)"
+run = "cd go && go test -v -run TestEvalMatrix -timeout 600s ./..."
+
 [tasks."test:python"]
 description = "Run Python tests (pytest)"
 run = "cd python && ./venv/bin/pytest"

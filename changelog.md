@@ -2,6 +2,21 @@
 
 All notable changes to Project Hydra will be documented in this file.
 
+## [1.3.0] - 2026-04-23
+
+### Added
+- **OpenAI-compatible adapter** (`src/openai_adapter.ts`, `go/openai_adapter.go`, `python/openai_adapter.py`) — works with OpenAI, Ollama, Together, Groq, and any provider exposing the OpenAI chat completions API. Configurable `baseUrl` for local/custom endpoints.
+- **JSON repair layer** (`src/json_repair.ts`, `go/json_repair.go`, `python/json_repair.py`) — shared extraction utility that strips markdown fences, finds JSON delimiters, and repairs trailing commas and single quotes. Used by both Anthropic and OpenAI adapters.
+- **Multi-model eval matrix** (`go/eval_test.go: TestEvalMatrix`) — run evals across multiple models in a single pass. Set `HYDRA_EVAL_MODELS=model1,model2` env var. Outputs comparison table with per-model scores.
+- `mise run eval:matrix` task for multi-model eval runs.
+- Test suites for json_repair and openai_adapter in TypeScript and Python.
+
+### Changed
+- All three AnthropicAdapters now use the shared JSON repair utility instead of inline regex extraction.
+- Decompose prompt improved with grounding constraint, few-shot examples, and structured JSON output spec (10/10 Haiku evals).
+- Eval harness auto-selects Anthropic or OpenAI adapter based on model name prefix (`claude-` → Anthropic, else → OpenAI).
+- `OPENAI_API_KEY` and `OPENAI_BASE_URL` env vars supported for OpenAI-compatible providers.
+
 ## [1.2.0] - 2026-04-23
 
 ### Added

@@ -1,11 +1,28 @@
-Decompose the following compound question into exactly {{BREADTH}} orthogonal subtopics for independent research.
+Decompose the following compound question into exactly {{BREADTH}} subtopics for independent research.
 
 Question: "{{TOPIC}}"
 
-Rules:
-- Each subtopic must address a DIFFERENT analytical dimension (e.g. technical, economic, ethical, historical, policy).
-- Do NOT mirror the question's own clauses as separate subtopics. Find cross-cutting angles instead.
-- Subtopics must be non-overlapping: if two subtopics could be merged without losing insight, merge them.
-- Each subtopic should be a self-contained research question, not a single keyword.
+STEP 1 — GROUND: Identify every distinct component explicitly mentioned in the question. Each component must be covered by at least one subtopic.
 
-Return ONLY a JSON object: {"subtopics": ["...", "..."]}
+STEP 2 — DECOMPOSE: Create {{BREADTH}} subtopics that collectively cover all components from Step 1. Each subtopic should cut across a different analytical dimension (e.g. technical, economic, ethical, historical, policy) rather than mirroring the question's own clauses.
+
+RULES:
+- Every explicit component of the question MUST be addressed by at least one subtopic.
+- Subtopics must be non-overlapping: if two could be merged without losing insight, merge them.
+- Each subtopic must be a concrete, self-contained research question of 15-40 words. Not a keyword, not an abstract framework.
+- Do NOT invent subtopics unrelated to the question. Stay grounded.
+
+EXAMPLES:
+
+Question: "How does ocean acidification affect coral reef ecosystems, and what economic consequences does this have for coastal tourism?"
+Subtopics:
+{"subtopics": ["What chemical mechanisms drive ocean acidification and at what thresholds do they cause measurable coral bleaching and structural reef degradation?", "How does coral reef decline cascade through marine biodiversity, affecting fish populations and species that depend on reef habitats?", "What is the measured economic impact of reef degradation on coastal tourism revenue, employment, and local community livelihoods?", "What reef restoration techniques and policy interventions have demonstrated effectiveness in mitigating both ecological damage and tourism losses?"]}
+
+Question: "What are the health risks of ultra-processed foods, and how do food labeling regulations differ between the EU and the US?"
+Subtopics:
+{"subtopics": ["What epidemiological evidence links ultra-processed food consumption to specific health outcomes such as obesity, cardiovascular disease, and metabolic disorders?", "How do the EU and US regulatory frameworks differ in their classification, labeling requirements, and permitted additives for processed foods?", "What role do consumer behavior and nutritional literacy play in mediating the health impact of ultra-processed foods under different labeling regimes?", "What economic and industry incentives shape food manufacturers' reformulation decisions in response to stricter labeling policies?"]}
+
+OUTPUT FORMAT:
+Return ONLY a JSON object with a "subtopics" array. Each element is a research question string of 15-40 words. No other text.
+
+{"subtopics": ["research question 1", "research question 2", "..."]}

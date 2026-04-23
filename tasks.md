@@ -1,6 +1,6 @@
 # Board: My Board
 > Description: Task management board
-> Created: 2026-04-22T14:10:10.807Z | Updated: 2026-04-22T23:08:35.016Z
+> Created: 2026-04-22T14:10:10.807Z | Updated: 2026-04-23T00:06:09.812Z
 
 ## TODO
 
@@ -12,6 +12,24 @@ _No tasks_
 
 ## DONE
 
+- [x] [T-MOAP0DDH-PSY] **Run evals across multiple models and build comparison matrix** `priority:medium`
+  > After prompt improvements land, run the 10 eval cases against at least 3 models (Haiku, Sonnet, one OpenAI model or local Ollama). Build a comparison table showing per-model scores. This validates that the prompt and harness work across providers. Add a mise task: eval:matrix that runs all combinations. Store results in a structured format for tracking over time.
+  > Created: 2026-04-22T23:37:35.669Z | Updated: 2026-04-23T00:06:09.812Z
+- [x] [T-MOAP03CM-JRK] **Make adapter interface provider-agnostic** `priority:medium`
+  > Current AnthropicAdapter hardcodes Anthropic HTTP API. Create a GenericAdapter or LLMAdapter that accepts a provider config (api_url, auth_header, request/response mapping). Alternatively, use LiteLLM (Python), go-openai compatible interface (Go), or similar abstraction. Goal: swap between Anthropic, OpenAI, Ollama, Gemini with config only, no code change. Start with adding an OpenAI-compatible adapter since most providers (including Ollama, Together, Groq) support that format.
+  > Created: 2026-04-22T23:37:22.678Z | Updated: 2026-04-23T00:04:10.919Z
+- [x] [T-MOAP08P9-B5W] **Add JSON repair/retry layer to adapter** `priority:medium`
+  > Different LLMs return JSON with varying reliability — some wrap in markdown code blocks, some add preamble text, some produce malformed JSON. Add a robust extraction layer: 1) strip markdown fences, 2) find first { to last }, 3) attempt parse, 4) if fail, one retry with a corrective prompt. This harness layer should sit in the base adapter logic shared across all languages, not per-provider.
+  > Created: 2026-04-22T23:37:29.613Z | Updated: 2026-04-23T00:04:10.889Z
+- [x] [T-MOAOZX56-BQ5] **Add grounding constraint to prevent over-abstraction** `priority:high`
+  > Sonnet failed evals because it invented abstract frameworks instead of covering what the question explicitly asks. Add a rule to the prompt: 'Before finding cross-cutting angles, ensure every explicit component of the question is addressed by at least one subtopic.' This grounds the decomposition in the actual question before allowing creative orthogonal cuts. This was the #1 failure mode when switching models.
+  > Created: 2026-04-22T23:37:14.634Z | Updated: 2026-04-22T23:44:06.962Z
+- [x] [T-MOAOZRX4-MJK] **Add structured JSON output schema to prompt** `priority:high`
+  > Instead of just asking for JSON, include a strict output schema with field descriptions. Many LLMs (OpenAI, Gemini, Mistral) support structured output or function calling — having a clear schema in the prompt is the lowest common denominator that works everywhere. Specify: subtopics array, each item must be a complete research question (not a keyword), length 15-40 words per subtopic.
+  > Created: 2026-04-22T23:37:07.864Z | Updated: 2026-04-22T23:44:06.933Z
+- [x] [T-MOAOZMPX-UPQ] **Add few-shot examples to decompose prompt** `priority:high`
+  > Current prompt relies on rules alone, which different LLMs interpret differently (Haiku: literal, Sonnet: over-abstract). Add 2-3 concrete few-shot examples showing a compound question and its ideal decomposition. Examples should demonstrate: orthogonal cuts, concrete not abstract subtopics, full coverage of the question's components. This anchors behavior across models better than instructions alone.
+  > Created: 2026-04-22T23:37:01.125Z | Updated: 2026-04-22T23:44:06.903Z
 - [x] [T-MOAMWGQK-80B] **Update CLAUDE.md and README with new tooling** `priority:low`
   > After all tooling lands, update CLAUDE.md with lint/format commands for each language (biome, ruff, golangci-lint) and mise setup. Update README prerequisites to mention mise. Add Development section covering linting across all three languages.
   > Created: 2026-04-22T22:38:34.172Z | Updated: 2026-04-22T23:08:35.016Z

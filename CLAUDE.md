@@ -37,6 +37,7 @@ cd go && go test ./...                          # run all tests
 cd go && go test -run TestHydraEngine ./...     # run unit tests only
 cd go && go test -run TestEvalDecomposition -timeout 300s ./...  # run LLM evals (needs ANTHROPIC_API_KEY)
 cd go && go test -run TestAnthropicIntegration ./...  # integration test (needs ANTHROPIC_API_KEY)
+cd go && HYDRA_EVAL_MODELS=claude-haiku-4-5-20251001,gpt-4o-mini go test -v -run TestEvalMatrix -timeout 600s ./...  # multi-model eval matrix
 cd go && golangci-lint run                      # lint
 ```
 
@@ -61,7 +62,7 @@ mise run lint               # run all linters
 
 `Adapter` interface → `HydraEngine` → `HydraNode` tree
 
-1. **Adapter** — abstraction over LLM calls. `decompose(topic, breadth)` returns subtopics. Two implementations: `MockAdapter` (deterministic, for unit tests) and `AnthropicAdapter` (real API via Claude Haiku 4.5).
+1. **Adapter** — abstraction over LLM calls. `decompose(topic, breadth)` returns subtopics. Three implementations: `MockAdapter` (deterministic, for unit tests), `AnthropicAdapter` (Anthropic Messages API), and `OpenAIAdapter` (any OpenAI-compatible API — OpenAI, Ollama, Together, Groq).
 2. **HydraEngine** — takes config (prompt, depth limit, branching factor, adapter). `run()` recursively calls `expand()` which decomposes each topic and fans out children concurrently.
 3. **HydraNode** — tree node with id, topic, depth, children, status, metadata (tokens, model, latency_ms).
 
@@ -78,17 +79,21 @@ The decompose prompt is a single shared template used by all three adapters. Edi
 
 `hydra-node.schema.json` is the shared JSON Schema (source of truth) defining the HydraNode structure. `protocol/examples/` has validation fixtures.
 
+### JSON repair (`json_repair.{ts,go,py}`)
+
+Shared JSON extraction/repair utility used by both adapters. Strips markdown code fences, locates `{...}` delimiters, repairs trailing commas and single quotes. Handles the reality that different LLMs return JSON with varying reliability.
+
 ### Evals (`go/eval_test.go`)
 
-10 LLM-as-judge evaluation cases that test decomposition quality on compound questions. Each case runs Hydra with the real Anthropic adapter, then a separate judge LLM call scores coverage, distinctness, relevance, and granularity (1-5 each, pass threshold: all >= 3 and avg >= 3.5). Requires `ANTHROPIC_API_KEY`.
+10 LLM-as-judge evaluation cases that test decomposition quality on compound questions. `TestEvalDecomposition` runs against a single model. `TestEvalMatrix` runs against multiple models for comparison (set `HYDRA_EVAL_MODELS=model1,model2,...`). The eval harness auto-selects Anthropic or OpenAI adapter based on model name prefix. Judge always uses Anthropic. Requires `ANTHROPIC_API_KEY`.
 
 ## Environment
 
-Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. Integration tests and evals skip automatically when the key is absent.
+Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. For OpenAI-compatible providers, also set `OPENAI_API_KEY` and optionally `OPENAI_BASE_URL`. Integration tests and evals skip automatically when keys are absent.
 
 ## Key design decisions
 
 - Depth limit 0 = root only (identity property). Leaf nodes get no adapter call.
 - Partial failure: if a branch's decompose call fails, that node is marked `status: "failed"` but siblings continue.
 - The decompose prompt lives in `protocol/decompose.prompt` (shared across all languages). It instructs for orthogonal analytical dimensions, not surface-level question mirroring. Changing this file affects eval scores.
-- Eval models are configurable via `HYDRA_EVAL_MODEL` and `HYDRA_JUDGE_MODEL` env vars (default: claude-haiku-4-5).
+- Eval models are configurable via `HYDRA_EVAL_MODEL` and `HYDRA_JUDGE_MODEL` env vars (default: claude-haiku-4-5). Multi-model matrix uses `HYDRA_EVAL_MODELS` (comma-separated).
