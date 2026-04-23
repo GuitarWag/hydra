@@ -37,6 +37,24 @@ var evalCases = []EvalCase{
 		ExpectedTopics: []string{"refund", "order", "password", "reset"},
 		MinSubtopics:   2,
 	},
+	{
+		Name:           "AI regulation tradeoffs",
+		Prompt:         "What are the tradeoffs between rapid AI innovation and regulatory oversight for safety?",
+		ExpectedTopics: []string{"AI", "innovation", "regulation", "safety"},
+		MinSubtopics:   3,
+	},
+	{
+		Name:           "Social media content moderation",
+		Prompt:         "How do free speech principles conflict with content moderation on social media platforms?",
+		ExpectedTopics: []string{"free speech", "content moderation", "social media"},
+		MinSubtopics:   3,
+	},
+	{
+		Name:           "Travel booking issues",
+		Prompt:         "My flight was canceled, I need to rebook and also need hotel recommendations near the airport.",
+		ExpectedTopics: []string{"flight", "canceled", "rebook", "hotel"},
+		MinSubtopics:   2,
+	},
 }
 
 type JudgeVerdict struct {
@@ -176,7 +194,7 @@ func TestEvalDecomposition(t *testing.T) {
 	}
 
 	evalModel := getEnvOrDefault("HYDRA_EVAL_MODEL", "claude-haiku-4-5-20251001")
-	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-haiku-4-5-20251001")
+	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-sonnet-4-6")
 	openaiKey := os.Getenv("OPENAI_API_KEY")
 	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
 
@@ -195,8 +213,8 @@ func TestEvalDecomposition(t *testing.T) {
 				BranchingFactor: 4,
 				Adapter:         adapter,
 			}
-			// Use action persona + lower branching for customer support
-			if tc.Name == "Customer support multi-topic" {
+			// Use action persona + lower branching for customer support/tasks
+			if tc.Name == "Customer support multi-topic" || tc.Name == "Travel booking issues" {
 				config.Persona = "action"
 				config.BranchingFactor = 2
 			}
@@ -245,7 +263,7 @@ func TestEvalMatrix(t *testing.T) {
 		t.Skip("HYDRA_EVAL_MODELS not set (comma-separated model list), skipping matrix eval")
 	}
 
-	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-haiku-4-5-20251001")
+	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-sonnet-4-6")
 	if anthropicKey == "" {
 		t.Skip("ANTHROPIC_API_KEY not set (needed for judge), skipping matrix eval")
 	}
