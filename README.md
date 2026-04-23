@@ -12,7 +12,7 @@
                                    │
             ┌──────────────────────┼──────────────────────┐
             │                      │                      │
-   ┌────────┴─────────┐  ┌───────┴────────┐  ┌──────────┴──────────┐
+   ┌────────┴──────────┐  ┌────────┴───────┐  ┌───────────┴─────────┐
    │ Cryptographic     │  │ Post-quantum   │  │ Regulatory &        │
    │ vulnerabilities & │  │ transition     │  │ coordination        │
    │ quantum timeline  │  │ costs for      │  │ frameworks across   │
