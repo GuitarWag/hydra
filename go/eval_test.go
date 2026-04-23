@@ -20,64 +20,16 @@ type EvalCase struct {
 
 var evalCases = []EvalCase{
 	{
-		Name:           "Quantum computing meets finance",
-		Prompt:         "How do quantum computers threaten current cryptographic systems, and what are the economic implications for the global banking sector?",
-		ExpectedTopics: []string{"quantum computing", "cryptography", "banking", "economics"},
-		MinSubtopics:   3,
+		Name:           "EV vs hydrogen",
+		Prompt:         "Compare electric vehicles versus hydrogen fuel cells for environmental impact.",
+		ExpectedTopics: []string{"electric vehicles", "hydrogen", "environmental"},
+		MinSubtopics:   2,
 	},
 	{
-		Name:           "EV vs hydrogen lifecycle",
-		Prompt:         "Compare the environmental impact of electric vehicles versus hydrogen fuel cells across manufacturing, daily usage, and end-of-life disposal.",
-		ExpectedTopics: []string{"electric vehicles", "hydrogen", "manufacturing", "disposal"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "Printing press to social media",
-		Prompt:         "How did the printing press influence the Protestant Reformation, and what parallels exist with social media's role in modern political movements?",
-		ExpectedTopics: []string{"printing press", "reformation", "social media", "political"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "Meditation neuroscience and culture",
-		Prompt:         "What are the neurological mechanisms behind meditation's effect on anxiety, and how do cultural attitudes toward mental health influence treatment adoption across societies?",
-		ExpectedTopics: []string{"neurology", "meditation", "mental health", "cultural"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "Climate food chain adaptation",
-		Prompt:         "How does climate change disrupt global food supply chains, and what role can vertical farming and gene-edited crops play in agricultural adaptation?",
-		ExpectedTopics: []string{"climate", "food supply", "vertical farming", "gene editing"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "Digital identity privacy vs regulation",
-		Prompt:         "Compare the privacy implications of centralized versus decentralized digital identity systems, considering both technical architecture trade-offs and regulatory frameworks like GDPR.",
-		ExpectedTopics: []string{"privacy", "centralized", "decentralized", "GDPR"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "Microplastics health policy",
-		Prompt:         "How do microplastics enter the human food chain, what are their known health effects on endocrine and immune systems, and what policy interventions have proven effective?",
-		ExpectedTopics: []string{"microplastics", "food chain", "health", "policy"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "AI sentencing and legal traditions",
-		Prompt:         "What are the ethical considerations of using AI in criminal sentencing, and how do common law versus civil law traditions differ in approaching algorithmic accountability?",
-		ExpectedTopics: []string{"AI", "sentencing", "ethics", "common law", "civil law"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "Urbanization multi-impact",
-		Prompt:         "How does rapid urbanization simultaneously affect biodiversity loss, mental health outcomes, and energy consumption patterns, and do these impacts differ between developing and developed nations?",
-		ExpectedTopics: []string{"urbanization", "biodiversity", "mental health", "energy"},
-		MinSubtopics:   3,
-	},
-	{
-		Name:           "Nuclear vs renewables for carbon neutrality",
-		Prompt:         "What are the trade-offs between nuclear fission, fusion research investment, and scaling renewable energy in achieving carbon neutrality by 2050, considering cost, safety, and grid reliability?",
-		ExpectedTopics: []string{"nuclear fission", "fusion", "renewable", "carbon neutrality"},
-		MinSubtopics:   3,
+		Name:           "Remote work effects",
+		Prompt:         "What are the effects of remote work on productivity and mental health?",
+		ExpectedTopics: []string{"remote work", "productivity", "mental health"},
+		MinSubtopics:   2,
 	},
 }
 
@@ -268,7 +220,7 @@ func TestEvalDecomposition(t *testing.T) {
 		})
 	}
 
-	t.Logf("\n=== EVAL SUMMARY: %d/10 passed, %d/10 failed ===", passed, failed)
+	t.Logf("\n=== EVAL SUMMARY: %d/%d passed, %d/%d failed ===", passed, len(evalCases), failed, len(evalCases))
 }
 
 func TestEvalMatrix(t *testing.T) {

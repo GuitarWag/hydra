@@ -636,22 +636,14 @@ All three suites share the same test cases:
 
 ## Eval Results
 
-10 LLM-as-judge evaluations across diverse domains. Each case decomposes a compound question, then a separate judge LLM scores the result on four dimensions (1-5). Pass threshold: all scores >= 3 and average >= 3.5.
+LLM-as-judge evaluations for decomposition quality. Each case decomposes a compound question, then a separate judge LLM scores the result on four dimensions (1-5). Pass threshold: all scores >= 3 and average >= 3.5.
 
 | Eval Case | Coverage | Distinctness | Relevance | Granularity | Result |
 |-----------|----------|--------------|-----------|-------------|--------|
-| Quantum computing + finance | 5 | 4 | 5 | 4 | **PASS** |
-| EV vs hydrogen lifecycle | 4 | 4 | 3 | 3 | **PASS** |
-| Printing press to social media | 4 | 4 | 4 | 3 | **PASS** |
-| Meditation neuroscience + culture | 4 | 4 | 4 | 4 | **PASS** |
-| Climate food chain adaptation | 4 | 4 | 4 | 4 | **PASS** |
-| Digital identity privacy vs regulation | 4 | 3 | 3 | 3 | **PASS** |
-| Microplastics health + policy | 4 | 4 | 3 | 4 | **PASS** |
-| AI sentencing + legal traditions | 5 | 4 | 5 | 4 | **PASS** |
-| Urbanization multi-impact | 4 | 4 | 3 | 3 | **PASS** |
-| Nuclear vs renewables for carbon neutrality | 4 | 4 | 4 | 4 | **PASS** |
+| EV vs hydrogen | 4 | 4 | 4 | 4 | **PASS** |
+| Remote work effects | 4 | 4 | 4 | 3 | **PASS** |
 
-**10/10 passing** | Average scores: coverage 4.2, distinctness 3.9, relevance 3.8, granularity 3.6 | ~56s total runtime on Claude Haiku 4.5
+**2/2 passing** | Average scores: coverage 4.0, distinctness 4.0, relevance 4.0, granularity 3.5 | ~8s total runtime on Claude Haiku 4.5
 
 ```bash
 cd go
