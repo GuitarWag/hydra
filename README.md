@@ -65,13 +65,14 @@ import { HydraEngine } from "./src/engine";
 import { AnthropicAdapter } from "./src/anthropic_adapter";
 
 const engine = new HydraEngine({
-  initialPrompt: "How does climate change disrupt global food supply chains, and what role can vertical farming and gene-edited crops play in adaptation?",
   depthLimit: 1,
   branchingFactor: 4,
   adapter: new AnthropicAdapter(process.env.ANTHROPIC_API_KEY!),
 });
 
-const tree = await engine.run();
+const tree = await engine.run(
+  "How does climate change disrupt global food supply chains, and what role can vertical farming and gene-edited crops play in adaptation?"
+);
 ```
 
 <details>
@@ -145,13 +146,14 @@ import (
 func main() {
     adapter := hydra.NewAnthropicAdapter(os.Getenv("ANTHROPIC_API_KEY"), "")
     engine := hydra.NewHydraEngine(hydra.HydraConfig{
-        InitialPrompt:   "What are the ethical considerations of using AI in criminal sentencing, and how do common law versus civil law traditions differ in approaching algorithmic accountability?",
         DepthLimit:      1,
         BranchingFactor: 4,
         Adapter:         adapter,
     })
 
-    tree, _ := engine.Run()
+    tree, _ := engine.Run(
+        "What are the ethical considerations of using AI in criminal sentencing, and how do common law versus civil law traditions differ in approaching algorithmic accountability?",
+    )
     out, _ := json.MarshalIndent(tree, "", "  ")
     fmt.Println(string(out))
 }
@@ -224,12 +226,13 @@ from anthropic_adapter import AnthropicAdapter
 async def main():
     adapter = AnthropicAdapter(api_key=os.environ["ANTHROPIC_API_KEY"])
     engine = HydraEngine(HydraConfig(
-        initial_prompt="Compare the privacy implications of centralized versus decentralized digital identity systems, considering technical trade-offs and regulatory frameworks like GDPR.",
         depth_limit=2,
         branching_factor=3,
         adapter=adapter,
     ))
-    tree = await engine.run()
+    tree = await engine.run(
+        "Compare the privacy implications of centralized versus decentralized digital identity systems, considering technical trade-offs and regulatory frameworks like GDPR."
+    )
     print(tree.model_dump_json(indent=2))
 
 asyncio.run(main())
@@ -309,13 +312,14 @@ import { AnthropicAdapter } from "./src/anthropic_adapter";
 
 // Step 1: Decompose
 const engine = new HydraEngine({
-  initialPrompt: "What are the technical, regulatory, and societal barriers to widespread brain-computer interface adoption?",
   depthLimit: 1,
   branchingFactor: 4,
   adapter: new AnthropicAdapter(process.env.ANTHROPIC_API_KEY!),
 });
 
-const tree = await engine.run();
+const tree = await engine.run(
+  "What are the technical, regulatory, and societal barriers to widespread brain-computer interface adoption?"
+);
 
 // Step 2: Research each subtopic in parallel
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
@@ -389,13 +393,12 @@ class CachedAnthropicAdapter extends AnthropicAdapter {
 
 // Deep tree with caching
 const engine = new HydraEngine({
-  initialPrompt: "Your complex question...",
   depthLimit: 3,
   branchingFactor: 4,
   adapter: new CachedAnthropicAdapter(process.env.ANTHROPIC_API_KEY!),
 });
 
-const tree = await engine.run();
+const tree = await engine.run("Your complex question...");
 // 85 LLM calls, but system prompt cached after first call
 // Saves ~1.2K tokens × 84 calls = ~100K tokens (~$0.30 at Haiku pricing)
 ```
@@ -423,12 +426,11 @@ func main() {
         "claude-haiku-4-5-20251001",
     )
     engine := hydra.NewHydraEngine(hydra.HydraConfig{
-        InitialPrompt:   "What are the second-order effects of remote work?",
         DepthLimit:      2,
         BranchingFactor: 3,
         Adapter:         quickAdapter,
     })
-    tree, _ := engine.Run()
+    tree, _ := engine.Run("What are the second-order effects of remote work?")
     
     // Stage 2: Deep analysis with Opus (expensive, thorough)
     client := anthropic.NewClient(os.Getenv("ANTHROPIC_API_KEY"))
@@ -547,10 +549,11 @@ Validation examples live in [`protocol/examples/`](protocol/examples/) — valid
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
-| `initialPrompt` | The compound question to decompose | `"How does X affect Y and Z?"` |
 | `depthLimit` | Recursion depth (0 = root only, no LLM calls) | `1` or `2` |
 | `branchingFactor` | Subtopics generated per node | `3` to `5` |
 | `adapter` | LLM adapter instance | `AnthropicAdapter` |
+
+The prompt is passed to `run()` at execution time, allowing you to reuse the same engine for multiple questions.
 
 **Cost model:** A tree with `depth=D` and `branching=B` makes at most `(B^D - 1) / (B - 1)` LLM calls. Examples:
 

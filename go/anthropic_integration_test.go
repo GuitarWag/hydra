@@ -16,13 +16,12 @@ func TestAnthropicIntegration(t *testing.T) {
 
 	t.Run("Pre-flight check and decomposition", func(t *testing.T) {
 		engine := NewHydraEngine(HydraConfig{
-			InitialPrompt:   "The future of sustainable energy",
 			DepthLimit:      1,
 			BranchingFactor: 2,
 			Adapter:         adapter,
 		})
 
-		root, err := engine.Run()
+		root, err := engine.Run("The future of sustainable energy")
 		if err != nil {
 			t.Fatalf("Engine run failed: %v", err)
 		}

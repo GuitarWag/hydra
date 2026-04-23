@@ -8,7 +8,6 @@ import (
 )
 
 type HydraConfig struct {
-	InitialPrompt   string
 	DepthLimit      int
 	BranchingFactor int
 	Adapter         Adapter
@@ -22,8 +21,8 @@ func NewHydraEngine(config HydraConfig) *HydraEngine {
 	return &HydraEngine{config: config}
 }
 
-func (e *HydraEngine) Run() (*HydraNode, error) {
-	return e.expand(e.config.InitialPrompt, 0), nil
+func (e *HydraEngine) Run(prompt string) (*HydraNode, error) {
+	return e.expand(prompt, 0), nil
 }
 
 func (e *HydraEngine) expand(topic string, currentDepth int) *HydraNode {

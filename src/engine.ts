@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import type { Adapter, HydraNode } from "./types";
 
 export interface HydraConfig {
-  initialPrompt: string;
   depthLimit: number;
   branchingFactor: number;
   adapter: Adapter;
@@ -11,8 +10,8 @@ export interface HydraConfig {
 export class HydraEngine {
   constructor(private config: HydraConfig) {}
 
-  async run(): Promise<HydraNode> {
-    return this.expand(this.config.initialPrompt, 0);
+  async run(prompt: string): Promise<HydraNode> {
+    return this.expand(prompt, 0);
   }
 
   private async expand(topic: string, currentDepth: number): Promise<HydraNode> {

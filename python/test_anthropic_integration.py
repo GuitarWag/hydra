@@ -24,13 +24,12 @@ async def test_anthropic_integration():
         pytest.fail(f"Pre-flight API check failed: {e}")
 
     config = HydraConfig(
-        initial_prompt="The future of sustainable energy",
         depth_limit=1,
         branching_factor=2,
         adapter=adapter,
     )
     engine = HydraEngine(config)
-    root = await engine.run()
+    root = await engine.run("The future of sustainable energy")
 
     assert root.status == "success"
     assert len(root.children) == 2

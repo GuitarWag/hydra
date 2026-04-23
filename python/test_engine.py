@@ -7,11 +7,9 @@ from mock_adapter import MockAdapter
 @pytest.mark.asyncio
 async def test_identity():
     """Identity Test: If n=0, the tree contains only the root"""
-    config = HydraConfig(
-        initial_prompt="Root", depth_limit=0, branching_factor=3, adapter=MockAdapter()
-    )
+    config = HydraConfig(depth_limit=0, branching_factor=3, adapter=MockAdapter())
     engine = HydraEngine(config)
-    root = await engine.run()
+    root = await engine.run("Root")
 
     assert root.depth == 0
     assert len(root.children) == 0
@@ -20,11 +18,9 @@ async def test_identity():
 @pytest.mark.asyncio
 async def test_branching():
     """Branching Test: If n=1 and breadth=3, the tree must contain exactly 4 nodes"""
-    config = HydraConfig(
-        initial_prompt="Root", depth_limit=1, branching_factor=3, adapter=MockAdapter()
-    )
+    config = HydraConfig(depth_limit=1, branching_factor=3, adapter=MockAdapter())
     engine = HydraEngine(config)
-    root = await engine.run()
+    root = await engine.run("Root")
 
     total_nodes = 1 + len(root.children)
     assert total_nodes == 4
@@ -33,11 +29,9 @@ async def test_branching():
 @pytest.mark.asyncio
 async def test_concurrency():
     """Concurrency Test: Handle concurrent expansion"""
-    config = HydraConfig(
-        initial_prompt="Root", depth_limit=2, branching_factor=5, adapter=MockAdapter()
-    )
+    config = HydraConfig(depth_limit=2, branching_factor=5, adapter=MockAdapter())
     engine = HydraEngine(config)
-    root = await engine.run()
+    root = await engine.run("Root")
 
     assert len(root.children) == 5
     assert len(root.children[0].children) == 5
@@ -47,11 +41,9 @@ async def test_concurrency():
 async def test_context_propagation():
     """Context Propagation Test: Verify child nodes have access to original root topic"""
     root_topic = "Intelligence"
-    config = HydraConfig(
-        initial_prompt=root_topic, depth_limit=2, branching_factor=2, adapter=MockAdapter()
-    )
+    config = HydraConfig(depth_limit=2, branching_factor=2, adapter=MockAdapter())
     engine = HydraEngine(config)
-    root = await engine.run()
+    root = await engine.run(root_topic)
 
     assert root_topic in root.children[0].topic
     assert root_topic in root.children[0].children[0].topic
@@ -77,11 +69,9 @@ async def test_partial_failure():
                 )
             return await super().decompose(topic, breadth)
 
-    config = HydraConfig(
-        initial_prompt="Root", depth_limit=2, branching_factor=2, adapter=FailingAdapter()
-    )
+    config = HydraConfig(depth_limit=2, branching_factor=2, adapter=FailingAdapter())
     engine = HydraEngine(config)
-    root = await engine.run()
+    root = await engine.run("Root")
 
     assert root.status == "success"
     assert len(root.children) == 2

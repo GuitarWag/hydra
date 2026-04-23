@@ -199,13 +199,12 @@ class TestOpenAIAdapterWithEngine:
             mock_client_cls.return_value = mock_client
 
             config = HydraConfig(
-                initial_prompt="test",
                 depth_limit=1,
                 branching_factor=2,
                 adapter=adapter,
             )
             engine = HydraEngine(config)
-            root = await engine.run()
+            root = await engine.run("test")
 
         assert root.status == "success"
         assert len(root.children) == 2

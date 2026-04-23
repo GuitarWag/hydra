@@ -25,13 +25,12 @@ describe("AnthropicAdapter Integration", () => {
       }
 
       const engine = new HydraEngine({
-        initialPrompt: "The future of sustainable energy",
         depthLimit: 1,
         branchingFactor: 2,
         adapter: adapter,
       });
 
-      const root = await engine.run();
+      const root = await engine.run("The future of sustainable energy");
 
       expect(root.status).toBe("success");
       expect(root.children).toHaveLength(2);

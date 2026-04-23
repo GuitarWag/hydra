@@ -8,13 +8,12 @@ import (
 func TestHydraEngine(t *testing.T) {
 	t.Run("Identity Test: If n=0, the tree contains only the root", func(t *testing.T) {
 		engine := NewHydraEngine(HydraConfig{
-			InitialPrompt:   "Root",
 			DepthLimit:      0,
 			BranchingFactor: 3,
 			Adapter:         &MockAdapter{ModelName: "mock-model"},
 		})
 
-		root, _ := engine.Run()
+		root, _ := engine.Run("Root")
 		if root.Depth != 0 {
 			t.Errorf("Expected depth 0, got %d", root.Depth)
 		}
@@ -25,13 +24,12 @@ func TestHydraEngine(t *testing.T) {
 
 	t.Run("Branching Test: If n=1 and breadth=3, the tree must contain exactly 4 nodes", func(t *testing.T) {
 		engine := NewHydraEngine(HydraConfig{
-			InitialPrompt:   "Root",
 			DepthLimit:      1,
 			BranchingFactor: 3,
 			Adapter:         &MockAdapter{ModelName: "mock-model"},
 		})
 
-		root, _ := engine.Run()
+		root, _ := engine.Run("Root")
 		totalNodes := 1 + len(root.Children)
 		if totalNodes != 4 {
 			t.Errorf("Expected 4 total nodes, got %d", totalNodes)
@@ -40,13 +38,12 @@ func TestHydraEngine(t *testing.T) {
 
 	t.Run("Concurrency Test: Handle concurrent expansion (simulated)", func(t *testing.T) {
 		engine := NewHydraEngine(HydraConfig{
-			InitialPrompt:   "Root",
 			DepthLimit:      2,
 			BranchingFactor: 5,
 			Adapter:         &MockAdapter{ModelName: "mock-model"},
 		})
 
-		root, _ := engine.Run()
+		root, _ := engine.Run("Root")
 		if len(root.Children) != 5 {
 			t.Errorf("Expected 5 children at depth 1, got %d", len(root.Children))
 		}
@@ -58,13 +55,12 @@ func TestHydraEngine(t *testing.T) {
 	t.Run("Context Propagation Test: Verify child nodes have access to original root topic", func(t *testing.T) {
 		rootTopic := "Intelligence"
 		engine := NewHydraEngine(HydraConfig{
-			InitialPrompt:   rootTopic,
 			DepthLimit:      2,
 			BranchingFactor: 2,
 			Adapter:         &MockAdapter{ModelName: "mock-model"},
 		})
 
-		root, _ := engine.Run()
+		root, _ := engine.Run(rootTopic)
 		if !strings.Contains(root.Children[0].Topic, rootTopic) {
 			t.Errorf("Child topic should contain root topic, got %s", root.Children[0].Topic)
 		}
@@ -75,13 +71,12 @@ func TestHydraEngine(t *testing.T) {
 		adapter := &MockAdapter{ModelName: "mock-model"}
 
 		engine := NewHydraEngine(HydraConfig{
-			InitialPrompt:   "Root",
 			DepthLimit:      2,
 			BranchingFactor: 2,
 			Adapter:         &CustomFailAdapter{adapter},
 		})
 
-		root, _ := engine.Run()
+		root, _ := engine.Run("Root")
 
 		if root.Status != "success" {
 			t.Errorf("Root status should be success, got %s", root.Status)

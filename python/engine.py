@@ -19,12 +19,10 @@ class Adapter(ABC):
 class HydraConfig:
     def __init__(
         self,
-        initial_prompt: str,
         depth_limit: int,
         branching_factor: int,
         adapter: Adapter,
     ):
-        self.initial_prompt = initial_prompt
         self.depth_limit = depth_limit
         self.branching_factor = branching_factor
         self.adapter = adapter
@@ -34,8 +32,8 @@ class HydraEngine:
     def __init__(self, config: HydraConfig):
         self.config = config
 
-    async def run(self) -> HydraNode:
-        return await self._expand(self.config.initial_prompt, 0)
+    async def run(self, prompt: str) -> HydraNode:
+        return await self._expand(prompt, 0)
 
     async def _expand(self, topic: str, current_depth: int) -> HydraNode:
         node = HydraNode(

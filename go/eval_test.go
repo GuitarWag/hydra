@@ -233,13 +233,12 @@ func TestEvalDecomposition(t *testing.T) {
 	for _, tc := range evalCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			engine := NewHydraEngine(HydraConfig{
-				InitialPrompt:   tc.Prompt,
 				DepthLimit:      1,
 				BranchingFactor: 4,
 				Adapter:         adapter,
 			})
 
-			root, err := engine.Run()
+			root, err := engine.Run(tc.Prompt)
 			if err != nil {
 				t.Fatalf("engine failed: %v", err)
 			}
@@ -310,13 +309,12 @@ func TestEvalMatrix(t *testing.T) {
 			for _, tc := range evalCases {
 				t.Run(tc.Name, func(t *testing.T) {
 					engine := NewHydraEngine(HydraConfig{
-						InitialPrompt:   tc.Prompt,
 						DepthLimit:      1,
 						BranchingFactor: 4,
 						Adapter:         adapter,
 					})
 
-					root, err := engine.Run()
+					root, err := engine.Run(tc.Prompt)
 					if err != nil {
 						t.Fatalf("engine failed: %v", err)
 					}

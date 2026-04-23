@@ -5,26 +5,24 @@ import { MockAdapter } from "./mock_adapter";
 describe("HydraEngine", () => {
   it("Identity Test: If n=0, the tree contains only the root", async () => {
     const engine = new HydraEngine({
-      initialPrompt: "Root",
       depthLimit: 0,
       branchingFactor: 3,
       adapter: new MockAdapter(),
     });
 
-    const root = await engine.run();
+    const root = await engine.run("Root");
     expect(root.depth).toBe(0);
     expect(root.children).toHaveLength(0);
   });
 
   it("Branching Test: If n=1 and breadth=3, the tree must contain exactly 4 nodes", async () => {
     const engine = new HydraEngine({
-      initialPrompt: "Root",
       depthLimit: 1,
       branchingFactor: 3,
       adapter: new MockAdapter(),
     });
 
-    const root = await engine.run();
+    const root = await engine.run("Root");
     expect(root.children).toHaveLength(3);
 
     let totalNodes = 1; // root
@@ -36,13 +34,12 @@ describe("HydraEngine", () => {
   it("Concurrency Test: Handle concurrent expansion (simulated by MockAdapter)", async () => {
     // In TS, Promise.all handles this. We can verify that children are populated correctly.
     const engine = new HydraEngine({
-      initialPrompt: "Root",
       depthLimit: 2,
       branchingFactor: 5, // 1 (root) + 5 (depth 1) + 25 (depth 2) = 31 nodes
       adapter: new MockAdapter(),
     });
 
-    const root = await engine.run();
+    const root = await engine.run("Root");
     expect(root.children).toHaveLength(5);
     expect(root.children[0].children).toHaveLength(5);
   });
@@ -50,13 +47,12 @@ describe("HydraEngine", () => {
   it("Context Propagation Test: Verify child nodes have access to original root topic (simulated by MockAdapter subtopic naming)", async () => {
     const rootTopic = "Intelligence";
     const engine = new HydraEngine({
-      initialPrompt: rootTopic,
       depthLimit: 2,
       branchingFactor: 2,
       adapter: new MockAdapter(),
     });
 
-    const root = await engine.run();
+    const root = await engine.run(rootTopic);
     // In our MockAdapter, we include the parent topic in the child topic name
     expect(root.children[0].topic).toContain(rootTopic);
     expect(root.children[0].children[0].topic).toContain(rootTopic);
@@ -71,13 +67,6 @@ describe("HydraEngine", () => {
         return super.decompose(topic, breadth);
       }
     }
-
-    const _engine = new HydraEngine({
-      initialPrompt: "Root",
-      depthLimit: 2,
-      branchingFactor: 2,
-      adapter: new FailingAdapter(),
-    });
 
     // Manually trigger a failure in one branch by injecting "FailMe"
     // For this test, I'll mock the first call to return one "FailMe" subtopic
@@ -96,13 +85,12 @@ describe("HydraEngine", () => {
     };
 
     const engineWithMock = new HydraEngine({
-      initialPrompt: "Root",
       depthLimit: 2,
       branchingFactor: 2,
       adapter: adapter,
     });
 
-    const root = await engineWithMock.run();
+    const root = await engineWithMock.run("Root");
 
     expect(root.status).toBe("success");
     expect(root.children).toHaveLength(2);
