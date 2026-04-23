@@ -4,11 +4,16 @@ Question: "{{TOPIC}}"
 
 STEP 1 — GROUND: Identify every distinct component explicitly mentioned in the question. Each component must be covered by at least one subtopic.
 
-STEP 2 — DECOMPOSE: Create {{BREADTH}} subtopics that collectively cover all components from Step 1. Each subtopic should cut across a different analytical dimension (e.g. technical, economic, ethical, historical, policy) rather than mirroring the question's own clauses.
+STEP 2 — DECOMPOSE: Create {{BREADTH}} subtopics that collectively cover all components from Step 1. Each subtopic must explore ONE distinct analytical dimension (technical, economic, ethical, regulatory, social, temporal, etc). Think orthogonal axes on a graph - no two subtopics should cover the same aspect.
+
+STEP 3 — VERIFY: Before finalizing, check each pair of subtopics:
+- Do they address different aspects? (lifecycle vs. supply chain vs. policy vs. end-user impact)
+- Could you research one WITHOUT touching the other's domain?
+- If two subtopics both mention "manufacturing" or "lifecycle" or "environmental impact", they overlap - merge or differentiate them.
 
 RULES:
 - Every explicit component of the question MUST be addressed by at least one subtopic.
-- Subtopics must be non-overlapping: if two could be merged without losing insight, merge them.
+- Subtopics must be non-overlapping: ZERO conceptual redundancy. If keywords or themes repeat across subtopics, they're too similar.
 - Each subtopic must be a concrete, self-contained research question of 15-40 words. Not a keyword, not an abstract framework.
 - Do NOT invent subtopics unrelated to the question. Stay grounded.
 
@@ -21,6 +26,15 @@ Subtopics:
 Question: "What are the health risks of ultra-processed foods, and how do food labeling regulations differ between the EU and the US?"
 Subtopics:
 {"subtopics": ["What epidemiological evidence links ultra-processed food consumption to specific health outcomes such as obesity, cardiovascular disease, and metabolic disorders?", "How do the EU and US regulatory frameworks differ in their classification, labeling requirements, and permitted additives for processed foods?", "What role do consumer behavior and nutritional literacy play in mediating the health impact of ultra-processed foods under different labeling regimes?", "What economic and industry incentives shape food manufacturers' reformulation decisions in response to stricter labeling policies?"]}
+
+BAD EXAMPLE (redundant subtopics):
+Question: "Compare electric vehicles versus hydrogen fuel cells for environmental impact."
+{"subtopics": ["What are the lifecycle greenhouse gas emissions for manufacturing, operating, and recycling electric vehicles versus hydrogen fuel cells?", "How do electricity grid sources and hydrogen production methods affect environmental footprint?", "What are the environmental costs of extracting raw materials and manufacturing components for EV batteries versus fuel cell systems?", "How do recycling and end-of-life disposal compare for batteries versus fuel cells?"]}
+Problem: Subtopic 1 and 3 both cover lifecycle/manufacturing. Subtopic 1 and 4 both mention recycling/end-of-life. This is WRONG - merge overlapping topics.
+
+GOOD VERSION:
+{"subtopics": ["What are the lifecycle greenhouse gas emissions for manufacturing, operating, and end-of-life disposal of EVs versus hydrogen fuel cells?", "How do energy source dependencies (electricity grid composition for EVs, hydrogen production methods) affect net environmental impact?", "What infrastructure and supply chain requirements (charging stations vs. refueling, rare earth mining vs. platinum extraction) differ between the two technologies?", "How do policy incentives, adoption rates, and regional suitability vary for EVs versus hydrogen in decarbonizing transportation?"]}
+Why better: Each subtopic = distinct dimension (lifecycle, energy inputs, infrastructure/supply, policy/adoption). No keyword overlap.
 
 OUTPUT FORMAT:
 Return ONLY a JSON object with a "subtopics" array. Each element is a research question string of 15-40 words. No other text.
