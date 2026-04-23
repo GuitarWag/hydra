@@ -296,6 +296,241 @@ asyncio.run(main())
 
 </details>
 
+## Real-World Integration Examples
+
+Hydra shines when integrated into agentic workflows and research pipelines. Here's how it pairs with popular frameworks:
+
+### ADK (Agent Development Kit)
+
+Use Hydra to decompose complex research tasks into parallel agent work streams:
+
+```typescript
+import { Agent, Task } from "@anthropic-ai/agent-kit";
+import { HydraEngine } from "./src/engine";
+import { AnthropicAdapter } from "./src/anthropic_adapter";
+
+// Decompose a research question into orthogonal dimensions
+const engine = new HydraEngine({
+  initialPrompt: "What are the technical, regulatory, and societal barriers to widespread brain-computer interface adoption?",
+  depthLimit: 1,
+  branchingFactor: 4,
+  adapter: new AnthropicAdapter(process.env.ANTHROPIC_API_KEY!),
+});
+
+const tree = await engine.run();
+
+// Spawn parallel agents, one per subtopic
+const agents = tree.children.map((child) =>
+  new Agent({
+    name: `Researcher-${child.id.slice(0, 8)}`,
+    instructions: `You are a specialist in: ${child.topic}. Research this dimension thoroughly and report findings in 300 words.`,
+    model: "claude-sonnet-4-6",
+  })
+);
+
+// Each agent researches its assigned subtopic concurrently
+const results = await Promise.all(
+  agents.map((agent) => agent.execute())
+);
+
+// Synthesize findings back into a unified report
+console.log("Research dimensions explored:", tree.children.length);
+console.log("Total research time:", results.reduce((sum, r) => sum + r.duration, 0), "ms");
+```
+
+**Why this matters:** Without Hydra, you'd either give the agent one massive compound task (risking shallow coverage) or manually split it yourself (slow, biased by your own mental model). Hydra auto-discovers the orthogonal dimensions an LLM *actually* sees, then you paralleliza research across them.
+
+---
+
+### Strands (Anthropic's workflow orchestration)
+
+Use Hydra as a pre-processing step to structure complex workflows:
+
+```python
+from strands import Workflow, Step
+from engine import HydraEngine, HydraConfig
+from anthropic_adapter import AnthropicAdapter
+import os
+
+# Decompose a multi-stakeholder policy question
+adapter = AnthropicAdapter(api_key=os.environ["ANTHROPIC_API_KEY"])
+engine = HydraEngine(HydraConfig(
+    initial_prompt="How should governments balance carbon pricing mechanisms with industrial competitiveness concerns?",
+    depth_limit=2,
+    branching_factor=3,
+    adapter=adapter,
+))
+tree = await engine.run()
+
+# Each subtopic becomes a Strand
+workflow = Workflow(name="policy-analysis")
+
+for child in tree.children:
+    # First-level decomposition: major analytical dimensions
+    strand = workflow.add_strand(
+        name=f"dimension-{child.id[:8]}",
+        context={"topic": child.topic}
+    )
+    
+    # Second-level: specific research tasks
+    for subchild in child.children:
+        strand.add_step(Step(
+            name=f"research-{subchild.id[:8]}",
+            prompt=f"Research: {subchild.topic}. Focus on empirical evidence and case studies.",
+            model="claude-opus-4-7",
+        ))
+    
+    # Synthesis step for this dimension
+    strand.add_step(Step(
+        name="synthesize",
+        prompt=f"Synthesize findings on: {child.topic}",
+        model="claude-sonnet-4-6",
+    ))
+
+# Final cross-dimension synthesis
+workflow.add_step(Step(
+    name="final-report",
+    prompt="Integrate findings across all dimensions into a coherent policy recommendation.",
+    model="claude-opus-4-7",
+))
+
+result = await workflow.run()
+```
+
+**Why this matters:** Hydra provides the *skeleton* — a research-ready tree structure. Strands provides the *execution* — parallel workflows, retry logic, state management. Together: automated research pipelines that scale to arbitrarily complex questions.
+
+---
+
+### Anthropic SDK (Direct Integration)
+
+Hydra's adapters are thin wrappers around the SDK. You can extend them to add custom behavior:
+
+```typescript
+import Anthropic from "@anthropic-ai/sdk";
+import { HydraEngine } from "./src/engine";
+import { AnthropicAdapter } from "./src/anthropic_adapter";
+
+// Custom adapter with prompt caching for repeated decompositions
+class CachedAnthropicAdapter extends AnthropicAdapter {
+  async decompose(topic: string, breadth: number) {
+    const client = new Anthropic({ apiKey: this.apiKey });
+    
+    // Load shared decomposition instructions into cache
+    const systemPrompt = await fs.readFile("protocol/decompose.prompt", "utf-8");
+    
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      system: [
+        {
+          type: "text",
+          text: systemPrompt,
+          cache_control: { type: "ephemeral" },  // Cache the decomposition logic
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: `Topic: ${topic}\nBreadth: ${breadth}`,
+        },
+      ],
+    });
+
+    return this.parseResponse(response);
+  }
+}
+
+// Deep tree (depth=3) with caching saves 80%+ on repeated system prompt costs
+const engine = new HydraEngine({
+  initialPrompt: "Your complex question here...",
+  depthLimit: 3,
+  branchingFactor: 4,
+  adapter: new CachedAnthropicAdapter(process.env.ANTHROPIC_API_KEY!),
+});
+
+const tree = await engine.run();
+console.log("Cache efficiency:", tree.metadata.cache_read_tokens / tree.metadata.tokens);
+```
+
+**Why this matters:** For deep trees (depth ≥ 2), the decomposition prompt repeats dozens of times. Prompt caching turns `O(nodes)` cost into `O(1)` for the shared system instructions. On a depth=3, branching=4 tree (85 nodes), this saves ~40K tokens (~$0.48 at Sonnet 4.6 pricing).
+
+---
+
+### Multi-Modal Research (Extended Thinking)
+
+Combine Hydra with extended thinking for deep analytical work:
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "os"
+    hydra "github.com/hydra/go-sdk"
+)
+
+func main() {
+    // Step 1: Decompose with fast model
+    quickAdapter := hydra.NewAnthropicAdapter(
+        os.Getenv("ANTHROPIC_API_KEY"),
+        "claude-haiku-4-5-20251001",
+    )
+    engine := hydra.NewHydraEngine(hydra.HydraConfig{
+        InitialPrompt:   "What are the second-order effects of widespread remote work on urban planning, commercial real estate, and tax revenue distribution?",
+        DepthLimit:      2,
+        BranchingFactor: 3,
+        Adapter:         quickAdapter,
+    })
+    tree, _ := engine.Run()
+    
+    // Step 2: Deep analysis on each leaf node with extended thinking
+    deepAdapter := hydra.NewAnthropicAdapter(
+        os.Getenv("ANTHROPIC_API_KEY"),
+        "claude-opus-4-7",  // Extended thinking enabled
+    )
+    
+    for _, child := range tree.Children {
+        for _, leaf := range child.Children {
+            // Each leaf gets extended thinking analysis
+            response, _ := deepAdapter.Decompose(
+                fmt.Sprintf("Provide a comprehensive analysis with citations: %s", leaf.Topic),
+                1,  // Not decomposing further, just analyzing
+            )
+            leaf.Resolution = response.Subtopics[0]  // Store analysis in resolution field
+        }
+    }
+    
+    out, _ := json.MarshalIndent(tree, "", "  ")
+    fmt.Println(string(out))
+}
+```
+
+**Why this matters:** Fast model (Haiku) maps the terrain cheaply. Slow model (Opus with extended thinking) does deep work on each identified dimension. You get comprehensive coverage *and* analytical depth without blowing your budget.
+
+---
+
+### Cost Comparison
+
+**Without Hydra** (single prompt to Opus 4.7):
+```
+Prompt: "Research all aspects of X, Y, and Z..."
+Cost: 1 call × $15/M input tokens × 8K prompt = $0.12
+Result: 4K token response touching all topics shallowly
+Quality: ⭐⭐ (surface-level, misses orthogonal dimensions)
+```
+
+**With Hydra** (decompose with Haiku, research with Sonnet):
+```
+Step 1: Hydra decompose (Haiku, depth=2, branching=3) = 4 calls × $1/M = $0.004
+Step 2: Research each leaf (Sonnet, 12 leaves × 2K context) = 12 × $3/M × 2K = $0.072
+Total: $0.076 (37% cheaper)
+Result: 12 focused research outputs, each exploring an orthogonal dimension
+Quality: ⭐⭐⭐⭐⭐ (comprehensive, structured, parallelizable)
+```
+
+**ROI:** Cheaper *and* higher quality. The decomposition cost is negligible; the savings come from replacing one expensive shallow call with many cheaper focused calls.
+
 ## The Hydra Protocol
 
 Every node across every language conforms to a single source of truth: [`protocol/hydra-node.schema.json`](protocol/hydra-node.schema.json).
