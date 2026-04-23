@@ -552,8 +552,26 @@ Validation examples live in [`protocol/examples/`](protocol/examples/) — valid
 | `depthLimit` | Recursion depth (0 = root only, no LLM calls) | `1` or `2` |
 | `branchingFactor` | Subtopics generated per node | `3` to `5` |
 | `adapter` | LLM adapter instance | `AnthropicAdapter` |
+| `persona` | Decomposition mode: `"analytical"` or `"action"` | `"action"` |
+| `systemPrompt` | Custom prompt override (replaces persona) | `"Custom instructions..."` |
 
 The prompt is passed to `run()` at execution time, allowing you to reuse the same engine for multiple questions.
+
+### Personas
+
+- **analytical** (default): Research questions, policy analysis, compound comparisons
+- **action**: Customer support, task breakdown, simple requests
+
+Example:
+```typescript
+// Action mode for customer support
+const engine = new HydraEngine({
+  depthLimit: 1,
+  branchingFactor: 2,
+  adapter: myAdapter,
+  persona: "action"
+});
+```
 
 **Cost model:** A tree with `depth=D` and `branching=B` makes at most `(B^D - 1) / (B - 1)` LLM calls. Examples:
 
@@ -577,7 +595,8 @@ Plug in any LLM provider by implementing the Adapter interface:
 interface Adapter {
   decompose(
     topic: string,
-    breadth: number
+    breadth: number,
+    systemPrompt?: string
   ): Promise<DecomposerResponse>;
   getModelName(): string;
 }
@@ -590,6 +609,7 @@ interface Adapter {
 type Adapter interface {
   Decompose(topic string,
     breadth int,
+    systemPrompt string,
   ) (*DecomposerResponse, error)
   GetModelName() string
 }
@@ -601,7 +621,8 @@ type Adapter interface {
 ```python
 class Adapter(ABC):
   async def decompose(
-    self, topic: str, breadth: int
+    self, topic: str, breadth: int,
+    system_prompt: str = None
   ) -> DecomposerResponse: ...
   def get_model_name(self) -> str: ...
 ```
