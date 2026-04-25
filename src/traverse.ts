@@ -5,8 +5,9 @@ export class HydraResult {
 
   traverse(fn: (item: TraverseItem) => void): void {
     const queue: TraverseItem[] = [{ node: this.root, parent: null, path: [this.root] }];
-    while (queue.length) {
-      const item = queue.shift()!;
+    while (queue.length > 0) {
+      const item = queue.shift();
+      if (!item) break;
       fn(item);
       for (const child of item.node.children) {
         queue.push({ node: child, parent: item.node, path: [...item.path, child] });

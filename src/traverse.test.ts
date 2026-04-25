@@ -52,9 +52,9 @@ describe("HydraResult.traverse", () => {
     result.traverse(({ node, parent }) => {
       parents[node.topic] = parent?.topic ?? null;
     });
-    expect(parents["M1"]).toBe("Root");
-    expect(parents["L1"]).toBe("M1");
-    expect(parents["L3"]).toBe("M2");
+    expect(parents.M1).toBe("Root");
+    expect(parents.L1).toBe("M1");
+    expect(parents.L3).toBe("M2");
   });
 
   it("path grows correctly depth-first along ancestry", () => {
@@ -63,9 +63,9 @@ describe("HydraResult.traverse", () => {
     result.traverse(({ node, path }) => {
       paths[node.topic] = path.map((n) => n.topic);
     });
-    expect(paths["Root"]).toEqual(["Root"]);
-    expect(paths["M1"]).toEqual(["Root", "M1"]);
-    expect(paths["L2"]).toEqual(["Root", "M1", "L2"]);
+    expect(paths.Root).toEqual(["Root"]);
+    expect(paths.M1).toEqual(["Root", "M1"]);
+    expect(paths.L2).toEqual(["Root", "M1", "L2"]);
   });
 
   it("single node — parent null, path length 1", () => {
