@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { HydraResult } from "./traverse";
 import type { Adapter, HydraNode } from "./types";
 
 export interface HydraConfig {
@@ -20,8 +21,8 @@ export class HydraEngine {
     this.resolvedSystemPrompt = this.config.systemPrompt || this.config.persona;
   }
 
-  async run(prompt: string): Promise<HydraNode> {
-    return this.expand(prompt, 0);
+  async run(prompt: string): Promise<HydraResult> {
+    return new HydraResult(await this.expand(prompt, 0));
   }
 
   private async expand(topic: string, currentDepth: number): Promise<HydraNode> {

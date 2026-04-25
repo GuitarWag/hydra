@@ -30,15 +30,15 @@ describe("AnthropicAdapter Integration", () => {
         adapter: adapter,
       });
 
-      const root = await engine.run("The future of sustainable energy");
+      const result = await engine.run("The future of sustainable energy");
 
-      expect(root.status).toBe("success");
-      expect(root.children).toHaveLength(2);
-      expect(root.metadata.model).toContain("claude-haiku-4-5");
-      expect(root.metadata.tokens).toBeGreaterThan(0);
+      expect(result.root.status).toBe("success");
+      expect(result.root.children).toHaveLength(2);
+      expect(result.root.metadata.model).toContain("claude-haiku-4-5");
+      expect(result.root.metadata.tokens).toBeGreaterThan(0);
 
-      console.log("Integration Test Result Topic 1:", root.children[0].topic);
-      console.log("Integration Test Result Topic 2:", root.children[1].topic);
+      console.log("Integration Test Result Topic 1:", result.root.children[0].topic);
+      console.log("Integration Test Result Topic 2:", result.root.children[1].topic);
     },
     30000,
   ); // Increase timeout for real API calls

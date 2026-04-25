@@ -12,6 +12,12 @@ export interface HydraNode {
   status?: "failed" | "success";
 }
 
+export interface TraverseItem {
+  node: HydraNode;
+  parent: HydraNode | null;
+  path: HydraNode[];
+}
+
 export interface DecomposerResponse {
   subtopics: string[];
   metadata: {
