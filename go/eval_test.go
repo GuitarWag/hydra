@@ -73,8 +73,8 @@ func getEnvOrDefault(key, fallback string) string {
 	return fallback
 }
 
-func callJudge(apiKey, judgeModel, originalPrompt string, subtopics, expectedTopics []string) (*JudgeVerdict, error) {
-	prompt := fmt.Sprintf(`You are an evaluation judge for a topic decomposition system called Hydra.
+func buildJudgePrompt(originalPrompt string, subtopics, expectedTopics []string) string {
+	return fmt.Sprintf(`You are an evaluation judge for a topic decomposition system called Hydra.
 The system receives a compound question and breaks it into distinct subtopics.
 
 ORIGINAL QUESTION:
@@ -100,68 +100,113 @@ Return ONLY a JSON object:
 		formatSubtopics(subtopics),
 		strings.Join(expectedTopics, ", "),
 	)
+}
 
+func parseJudgeVerdict(text string) (*JudgeVerdict, error) {
+	start := strings.Index(text, "{")
+	end := strings.LastIndex(text, "}")
+	if start == -1 || end == -1 || end <= start {
+		return nil, fmt.Errorf("no JSON in judge response: %s", text)
+	}
+	var verdict JudgeVerdict
+	if err := json.Unmarshal([]byte(text[start:end+1]), &verdict); err != nil {
+		return nil, fmt.Errorf("failed to parse judge verdict: %v\nraw: %s", err, text)
+	}
+	return &verdict, nil
+}
+
+func callAnthropicJudge(apiKey, judgeModel, prompt string) (string, error) {
 	reqBody := anthropicRequest{
 		Model:     judgeModel,
 		MaxTokens: 512,
-		Messages: []anthropicMessage{
-			{Role: "user", Content: prompt},
-		},
+		Messages:  []anthropicMessage{{Role: "user", Content: prompt}},
 	}
-
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
 	req, err := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-api-key", apiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer resp.Body.Close()
-
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("judge API error (%d): %s", resp.StatusCode, string(body))
+	}
+	var ar anthropicResponse
+	if err := json.Unmarshal(body, &ar); err != nil {
+		return "", err
+	}
+	if len(ar.Content) == 0 {
+		return "", fmt.Errorf("empty judge response")
+	}
+	return ar.Content[0].Text, nil
+}
+
+func callGeminiJudge(apiKey, judgeModel, prompt string) (string, error) {
+	reqBody := geminiRequest{
+		Contents:         []geminiContent{{Role: "user", Parts: []geminiPart{{Text: prompt}}}},
+		GenerationConfig: geminiGenConfig{MaxOutputTokens: 512},
+	}
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+	url := fmt.Sprintf("%s/%s:generateContent?key=%s", geminiBaseURL, judgeModel, apiKey)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Gemini judge API error (%d): %s", resp.StatusCode, string(body))
+	}
+	var gr geminiResponse
+	if err := json.Unmarshal(body, &gr); err != nil {
+		return "", err
+	}
+	if len(gr.Candidates) == 0 || len(gr.Candidates[0].Content.Parts) == 0 {
+		return "", fmt.Errorf("empty Gemini judge response")
+	}
+	return gr.Candidates[0].Content.Parts[0].Text, nil
+}
+
+func callJudge(anthropicKey, googleKey, judgeModel, originalPrompt string, subtopics, expectedTopics []string) (*JudgeVerdict, error) {
+	prompt := buildJudgePrompt(originalPrompt, subtopics, expectedTopics)
+
+	var text string
+	var err error
+	if strings.HasPrefix(judgeModel, "gemini-") {
+		text, err = callGeminiJudge(googleKey, judgeModel, prompt)
+	} else {
+		text, err = callAnthropicJudge(anthropicKey, judgeModel, prompt)
+	}
 	if err != nil {
 		return nil, err
 	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("judge API error (%d): %s", resp.StatusCode, string(body))
-	}
-
-	var anthropicResp anthropicResponse
-	if err := json.Unmarshal(body, &anthropicResp); err != nil {
-		return nil, err
-	}
-
-	if len(anthropicResp.Content) == 0 {
-		return nil, fmt.Errorf("empty judge response")
-	}
-
-	text := anthropicResp.Content[0].Text
-
-	// Extract JSON from response
-	start := strings.Index(text, "{")
-	end := strings.LastIndex(text, "}")
-	if start == -1 || end == -1 || end <= start {
-		return nil, fmt.Errorf("no JSON in judge response: %s", text)
-	}
-
-	var verdict JudgeVerdict
-	if err := json.Unmarshal([]byte(text[start:end+1]), &verdict); err != nil {
-		return nil, fmt.Errorf("failed to parse judge verdict: %v\nraw: %s", err, text)
-	}
-
-	return &verdict, nil
+	return parseJudgeVerdict(text)
 }
 
 func formatSubtopics(subtopics []string) string {
@@ -191,21 +236,27 @@ func adapterForModel(model, anthropicKey, openaiKey, openaiBaseURL, googleKey st
 }
 
 func TestEvalDecomposition(t *testing.T) {
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
-	if apiKey == "" {
-		t.Skip("ANTHROPIC_API_KEY not set, skipping eval")
-	}
+	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
+	googleKey := os.Getenv("GOOGLE_API_KEY")
+	openaiKey := os.Getenv("OPENAI_API_KEY")
+	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
 
 	evalModel := getEnvOrDefault("HYDRA_EVAL_MODEL", "claude-haiku-4-5-20251001")
 	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-sonnet-4-6")
-	openaiKey := os.Getenv("OPENAI_API_KEY")
-	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
-	googleKey := os.Getenv("GOOGLE_API_KEY")
+
+	judgeNeedsAnthropic := !strings.HasPrefix(judgeModel, "gemini-")
+	evalNeedsAnthropic := strings.HasPrefix(evalModel, "claude-")
+	if (judgeNeedsAnthropic || evalNeedsAnthropic) && anthropicKey == "" {
+		t.Skip("ANTHROPIC_API_KEY not set, skipping eval")
+	}
+	if strings.HasPrefix(judgeModel, "gemini-") && googleKey == "" {
+		t.Skip("GOOGLE_API_KEY not set for Gemini judge, skipping eval")
+	}
 
 	t.Logf("Decomposer model: %s", evalModel)
 	t.Logf("Judge model: %s", judgeModel)
 
-	adapter := adapterForModel(evalModel, apiKey, openaiKey, openaiBaseURL, googleKey)
+	adapter := adapterForModel(evalModel, anthropicKey, openaiKey, openaiBaseURL, googleKey)
 
 	passed := 0
 	failed := 0
@@ -236,7 +287,7 @@ func TestEvalDecomposition(t *testing.T) {
 				t.Errorf("expected >= %d subtopics, got %d", tc.MinSubtopics, len(subtopics))
 			}
 
-			verdict, err := callJudge(apiKey, judgeModel, tc.Prompt, subtopics, tc.ExpectedTopics)
+			verdict, err := callJudge(anthropicKey, googleKey, judgeModel, tc.Prompt, subtopics, tc.ExpectedTopics)
 			if err != nil {
 				t.Fatalf("judge call failed: %v", err)
 			}
@@ -310,7 +361,7 @@ func TestEvalMatrix(t *testing.T) {
 					subtopics := collectSubtopics(root)
 					t.Logf("Subtopics: %v", subtopics)
 
-					verdict, err := callJudge(anthropicKey, judgeModel, tc.Prompt, subtopics, tc.ExpectedTopics)
+					verdict, err := callJudge(anthropicKey, googleKey, judgeModel, tc.Prompt, subtopics, tc.ExpectedTopics)
 					if err != nil {
 						t.Fatalf("judge call failed: %v", err)
 					}
