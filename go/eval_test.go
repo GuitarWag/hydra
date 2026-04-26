@@ -180,9 +180,12 @@ func collectSubtopics(node *HydraNode) []string {
 	return topics
 }
 
-func adapterForModel(model, anthropicKey, openaiKey, openaiBaseURL string) Adapter {
+func adapterForModel(model, anthropicKey, openaiKey, openaiBaseURL, googleKey string) Adapter {
 	if strings.HasPrefix(model, "claude-") {
 		return NewAnthropicAdapter(anthropicKey, model)
+	}
+	if strings.HasPrefix(model, "gemini-") {
+		return NewGeminiAdapter(googleKey, model)
 	}
 	return NewOpenAIAdapter(openaiKey, model, openaiBaseURL)
 }
@@ -197,11 +200,12 @@ func TestEvalDecomposition(t *testing.T) {
 	judgeModel := getEnvOrDefault("HYDRA_JUDGE_MODEL", "claude-sonnet-4-6")
 	openaiKey := os.Getenv("OPENAI_API_KEY")
 	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
+	googleKey := os.Getenv("GOOGLE_API_KEY")
 
 	t.Logf("Decomposer model: %s", evalModel)
 	t.Logf("Judge model: %s", judgeModel)
 
-	adapter := adapterForModel(evalModel, apiKey, openaiKey, openaiBaseURL)
+	adapter := adapterForModel(evalModel, apiKey, openaiKey, openaiBaseURL, googleKey)
 
 	passed := 0
 	failed := 0
@@ -268,6 +272,8 @@ func TestEvalMatrix(t *testing.T) {
 		t.Skip("ANTHROPIC_API_KEY not set (needed for judge), skipping matrix eval")
 	}
 
+	googleKey := os.Getenv("GOOGLE_API_KEY")
+
 	models := strings.Split(modelsEnv, ",")
 	for i := range models {
 		models[i] = strings.TrimSpace(models[i])
@@ -283,7 +289,7 @@ func TestEvalMatrix(t *testing.T) {
 
 	for _, model := range models {
 		t.Run(model, func(t *testing.T) {
-			adapter := adapterForModel(model, anthropicKey, openaiKey, openaiBaseURL)
+			adapter := adapterForModel(model, anthropicKey, openaiKey, openaiBaseURL, googleKey)
 
 			passed, failed := 0, 0
 			totalCov, totalDist, totalRel, totalGran := 0, 0, 0, 0
