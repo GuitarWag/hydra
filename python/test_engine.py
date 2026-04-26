@@ -58,7 +58,7 @@ async def test_partial_failure():
             super().__init__()
             self.call_count = 0
 
-        async def decompose(self, topic: str, breadth: int):
+        async def decompose(self, topic: str, breadth: int, system_prompt: str = ""):
             self.call_count += 1
             if self.call_count == 1:
                 from models import DecomposerResponse, NodeMetadata
@@ -67,7 +67,9 @@ async def test_partial_failure():
                     subtopics=["SuccessTopic", "FailMeTopic"],
                     metadata=NodeMetadata(tokens=10, model="test", latency_ms=10),
                 )
-            return await super().decompose(topic, breadth)
+            if "FailMe" in topic:
+                raise RuntimeError("Simulated failure")
+            return await super().decompose(topic, breadth, system_prompt)
 
     config = HydraConfig(depth_limit=2, branching_factor=2, adapter=FailingAdapter())
     engine = HydraEngine(config)

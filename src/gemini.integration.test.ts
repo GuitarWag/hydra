@@ -1,7 +1,9 @@
 import * as dotenv from "dotenv";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { HydraEngine } from "./engine";
 import { GeminiAdapter } from "./gemini_adapter";
+
+vi.unmock("@google/genai");
 
 dotenv.config();
 
