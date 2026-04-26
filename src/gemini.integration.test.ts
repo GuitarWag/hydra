@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 import { describe, expect, it } from "vitest";
-import { GeminiAdapter } from "./gemini_adapter";
 import { HydraEngine } from "./engine";
+import { GeminiAdapter } from "./gemini_adapter";
 
 dotenv.config();
 

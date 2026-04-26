@@ -1,25 +1,17 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { GoogleGenAI } from "@google/genai";
 import { extractJson } from "./json_repair";
 import type { Adapter, DecomposerResponse } from "./types";
 
 const MODEL = "gemini-2.5-flash";
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-
-interface GeminiResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
-  }>;
-  usageMetadata?: {
-    promptTokenCount: number;
-    candidatesTokenCount: number;
-  };
-}
 
 export class GeminiAdapter implements Adapter {
-  constructor(private apiKey: string) {}
+  private client: GoogleGenAI;
+
+  constructor(apiKey: string) {
+    this.client = new GoogleGenAI({ apiKey });
+  }
 
   async decompose(
     topic: string,
@@ -29,38 +21,28 @@ export class GeminiAdapter implements Adapter {
     const tmpl = readFileSync(resolve(__dirname, "..", "protocol", "decompose.prompt"), "utf-8");
     const prompt = tmpl.replace("{{BREADTH}}", String(breadth)).replace("{{TOPIC}}", topic);
 
-    const body: Record<string, unknown> = {
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 1024 },
-    };
-
+    const config: Record<string, unknown> = { maxOutputTokens: 1024 };
     if (systemPrompt) {
-      body.system_instruction = { parts: [{ text: systemPrompt }] };
+      config.systemInstruction = systemPrompt;
     }
 
     const start = Date.now();
-    const response = await fetch(`${BASE_URL}/${MODEL}:generateContent?key=${this.apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+    const response = await this.client.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+      config,
     });
     const latency = Date.now() - start;
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Gemini API error ${response.status}: ${text.slice(0, 300)}`);
-    }
-
-    const result: GeminiResponse = await response.json();
-    const text = result.candidates[0]?.content?.parts[0]?.text ?? "";
+    const text = response.text ?? "";
     if (!text) {
       throw new Error("Gemini API returned empty content");
     }
 
     const data = extractJson<{ subtopics: string[] }>(text);
     const tokens =
-      (result.usageMetadata?.promptTokenCount ?? 0) +
-      (result.usageMetadata?.candidatesTokenCount ?? 0);
+      (response.usageMetadata?.promptTokenCount ?? 0) +
+      (response.usageMetadata?.candidatesTokenCount ?? 0);
 
     return {
       subtopics: data.subtopics.slice(0, breadth),
