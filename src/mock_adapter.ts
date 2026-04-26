@@ -3,7 +3,11 @@ import type { Adapter, DecomposerResponse } from "./types";
 export class MockAdapter implements Adapter {
   constructor(private modelName: string = "mock-model") {}
 
-  async decompose(topic: string, breadth: number, _systemPrompt?: string): Promise<DecomposerResponse> {
+  async decompose(
+    topic: string,
+    breadth: number,
+    _systemPrompt?: string,
+  ): Promise<DecomposerResponse> {
     const subtopics = Array.from({ length: breadth }, (_, i) => `${topic} - Subtopic ${i + 1}`);
 
     return {

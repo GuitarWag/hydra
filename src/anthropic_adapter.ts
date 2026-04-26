@@ -13,19 +13,27 @@ export class AnthropicAdapter implements Adapter {
     this.model = model;
   }
 
-  async decompose(topic: string, breadth: number, systemPrompt?: string): Promise<DecomposerResponse> {
+  async decompose(
+    topic: string,
+    breadth: number,
+    systemPrompt?: string,
+  ): Promise<DecomposerResponse> {
     let tmpl: string;
     if (systemPrompt) {
       // Custom or persona-mapped prompt
-      const promptFile = systemPrompt === "analytical" || systemPrompt === "action"
-        ? `prompts/${systemPrompt}.txt`
-        : null;
+      const promptFile =
+        systemPrompt === "analytical" || systemPrompt === "action"
+          ? `prompts/${systemPrompt}.txt`
+          : null;
       tmpl = promptFile
         ? readFileSync(resolve(__dirname, "..", "protocol", promptFile), "utf-8")
         : systemPrompt;
     } else {
       // Default: analytical
-      tmpl = readFileSync(resolve(__dirname, "..", "protocol", "prompts", "analytical.txt"), "utf-8");
+      tmpl = readFileSync(
+        resolve(__dirname, "..", "protocol", "prompts", "analytical.txt"),
+        "utf-8",
+      );
     }
     const prompt = tmpl.replace("{{BREADTH}}", String(breadth)).replace("{{TOPIC}}", topic);
 
