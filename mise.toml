@@ -53,7 +53,7 @@ description = "Run Go unit tests"
 run = "cd go && go test -skip TestEvalDecomposition ./..."
 
 [tasks."eval"]
-description = "Run Go LLM-as-judge evals (needs ANTHROPIC_API_KEY)"
+description = "Run Go LLM-as-judge evals (configure HYDRA_EVAL_MODEL and HYDRA_JUDGE_MODEL in .env)"
 run = "cd go && go test -v -run TestEvalDecomposition -timeout 300s ./..."
 
 [tasks."eval:matrix"]
