@@ -165,7 +165,7 @@ func callAnthropicJudge(apiKey, judgeModel, prompt string) (string, error) {
 func callGeminiJudge(apiKey, judgeModel, prompt string) (string, error) {
 	reqBody := geminiRequest{
 		Contents:         []geminiContent{{Role: "user", Parts: []geminiPart{{Text: prompt}}}},
-		GenerationConfig: geminiGenConfig{MaxOutputTokens: 512},
+		GenerationConfig: geminiGenConfig{MaxOutputTokens: 2048},
 	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {

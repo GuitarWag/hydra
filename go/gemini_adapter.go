@@ -53,7 +53,7 @@ type geminiResponse struct {
 }
 
 func (a *GeminiAdapter) Decompose(topic string, breadth int, systemPrompt string) (*DecomposerResponse, error) {
-	tmpl, err := loadDecomposePrompt("")
+	tmpl, err := loadDecomposePrompt(systemPrompt)
 	if err != nil {
 		return nil, err
 	}
@@ -62,10 +62,7 @@ func (a *GeminiAdapter) Decompose(topic string, breadth int, systemPrompt string
 
 	reqBody := geminiRequest{
 		Contents:         []geminiContent{{Role: "user", Parts: []geminiPart{{Text: prompt}}}},
-		GenerationConfig: geminiGenConfig{MaxOutputTokens: 1024},
-	}
-	if systemPrompt != "" {
-		reqBody.SystemInstruction = &geminiContent{Parts: []geminiPart{{Text: systemPrompt}}}
+		GenerationConfig: geminiGenConfig{MaxOutputTokens: 4096},
 	}
 
 	jsonData, err := json.Marshal(reqBody)
