@@ -9,7 +9,14 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/joho/godotenv"
 )
+
+func TestMain(m *testing.M) {
+	godotenv.Load("../.env")
+	os.Exit(m.Run())
+}
 
 type EvalCase struct {
 	Name           string
