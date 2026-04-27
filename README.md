@@ -30,7 +30,7 @@ Hydra ships with **full implementations** in TypeScript, Go, and Python. All thr
 |---|---|---|---|
 | **Concurrency** | `Promise.all` | goroutines + `sync.WaitGroup` | `asyncio.gather` |
 | **Types** | Interfaces | Structs + Interfaces | Pydantic models |
-| **LLM Client** | `@anthropic-ai/sdk` | Raw HTTP | `anthropic` async SDK |
+| **LLM Clients** | `@anthropic-ai/sdk`, `@google/genai` | Raw HTTP | `anthropic` async SDK |
 | **Tests** | Vitest | `go test` | pytest |
 
 ## Quick Start
@@ -38,7 +38,7 @@ Hydra ships with **full implementations** in TypeScript, Go, and Python. All thr
 ### Prerequisites
 
 - Node.js 24+, Go 1.26+, Python 3.13+
-- An [Anthropic API key](https://console.anthropic.com/)
+- An [Anthropic API key](https://console.anthropic.com/) and/or a [Google AI Studio key](https://aistudio.google.com/apikey)
 - [mise](https://mise.jdx.dev) (recommended) — manages all tool versions and tasks
 
 ```bash
@@ -63,16 +63,33 @@ npm install
 ```typescript
 import { HydraEngine } from "./src/engine";
 import { AnthropicAdapter } from "./src/anthropic_adapter";
+import { GeminiAdapter } from "./src/gemini_adapter";   // Google AI Studio
 
+// Anthropic
 const engine = new HydraEngine({
   depthLimit: 1,
   branchingFactor: 4,
   adapter: new AnthropicAdapter(process.env.ANTHROPIC_API_KEY!),
 });
 
-const tree = await engine.run(
+// Google Gemini (set GOOGLE_API_KEY in .env)
+const geminiEngine = new HydraEngine({
+  depthLimit: 1,
+  branchingFactor: 4,
+  adapter: new GeminiAdapter(process.env.GOOGLE_API_KEY!),
+});
+
+const result = await engine.run(
   "How does climate change disrupt global food supply chains, and what role can vertical farming and gene-edited crops play in adaptation?"
 );
+
+// Access root node
+console.log(result.root.topic);
+
+// Traverse all nodes without writing recursion
+result.traverse(({ node, parent, path }) => {
+  console.log(`${"  ".repeat(node.depth)}${node.topic}`);
+});
 ```
 
 <details>
@@ -299,6 +316,47 @@ asyncio.run(main())
 
 </details>
 
+## Traversing Results
+
+`engine.run()` in TypeScript returns a `HydraResult` — the tree root plus a built-in iterative traversal method. Use `.traverse()` instead of writing your own recursion.
+
+```typescript
+const result = await engine.run("Your question here");
+
+// BFS — visits every node level by level (default)
+result.traverse(({ node, parent, path }) => {
+  // node   — current HydraNode
+  // parent — direct parent HydraNode (null for root)
+  // path   — ancestry chain from root → current node
+  console.log(path.map(n => n.topic).join(" > "));
+});
+
+// Collect all nodes
+const all = [];
+result.traverse(({ node }) => all.push(node));
+
+// Collect only leaves
+const leaves = [];
+result.traverse(({ node }) => {
+  if (node.children.length === 0) leaves.push(node.topic);
+});
+
+// Find by depth
+const depthTwo = [];
+result.traverse(({ node }) => {
+  if (node.depth === 2) depthTwo.push(node);
+});
+
+// Inspect the parent relationship
+result.traverse(({ node, parent }) => {
+  if (parent) console.log(`${parent.topic} → ${node.topic}`);
+});
+```
+
+The raw root is always at `result.root` if you need direct access.
+
+---
+
 ## Real-World Use Cases
 
 ### Parallel Research Pipelines
@@ -317,20 +375,25 @@ const engine = new HydraEngine({
   adapter: new AnthropicAdapter(process.env.ANTHROPIC_API_KEY!),
 });
 
-const tree = await engine.run(
+const result = await engine.run(
   "What are the technical, regulatory, and societal barriers to widespread brain-computer interface adoption?"
 );
 
-// Step 2: Research each subtopic in parallel
+// Step 2: Collect subtopics via traverse, research each in parallel
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+const subtopics: string[] = [];
+result.traverse(({ node }) => {
+  if (node.depth === 1) subtopics.push(node.topic);
+});
+
 const researches = await Promise.all(
-  tree.children.map((child) =>
+  subtopics.map((topic) =>
     client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
       messages: [{
         role: "user",
-        content: `Research this dimension thoroughly with citations: ${child.topic}`,
+        content: `Research this dimension thoroughly with citations: ${topic}`,
       }],
     })
   )
@@ -342,8 +405,8 @@ const synthesis = await client.messages.create({
   max_tokens: 4096,
   messages: [{
     role: "user",
-    content: `Synthesize these research findings:\n\n${researches.map((r, i) => 
-      `## ${tree.children[i].topic}\n${r.content[0].text}`
+    content: `Synthesize these research findings:\n\n${researches.map((r, i) =>
+      `## ${subtopics[i]}\n${r.content[0].text}`
     ).join("\n\n")}`,
   }],
 });
@@ -582,6 +645,31 @@ const engine = new HydraEngine({
 | 2 | 4 | 5 | ~10-15s |
 | 3 | 3 | 13 | ~15-25s |
 
+## Built-in Adapters
+
+| Adapter | Languages | Key |
+|---------|-----------|-----|
+| `AnthropicAdapter` | TS, Go, Python | `ANTHROPIC_API_KEY` |
+| `OpenAIAdapter` | TS, Go | `OPENAI_API_KEY` (any OpenAI-compatible endpoint) |
+| `GeminiAdapter` | TS, Go | `GOOGLE_API_KEY` (Google AI Studio) |
+
+```typescript
+// Anthropic
+new AnthropicAdapter(process.env.ANTHROPIC_API_KEY!)
+
+// OpenAI-compatible (OpenAI, Ollama, Groq, Together…)
+new OpenAIAdapter({ apiKey: "...", model: "gpt-4o", baseUrl: "https://..." })
+
+// Gemini 2.5 Flash via Google AI Studio
+new GeminiAdapter(process.env.GOOGLE_API_KEY!)
+```
+
+```go
+hydra.NewAnthropicAdapter(os.Getenv("ANTHROPIC_API_KEY"), "claude-haiku-4-5-20251001")
+hydra.NewOpenAIAdapter(os.Getenv("OPENAI_API_KEY"), "gpt-4o", "")
+hydra.NewGeminiAdapter(os.Getenv("GOOGLE_API_KEY"), "gemini-2.5-flash")
+```
+
 ## Custom Adapters
 
 Plug in any LLM provider by implementing the Adapter interface:
@@ -659,16 +747,25 @@ All three suites share the same test cases:
 
 LLM-as-judge evaluations for decomposition quality. Each case decomposes a compound question, then a separate judge LLM scores the result on four dimensions (1-5). Pass threshold: all scores >= 3 and average >= 3.5.
 
+### Gemini 2.5 Flash (decomposer) + Gemini 2.5 Pro (judge)
+
 | Eval Case | Coverage | Distinctness | Relevance | Granularity | Result |
 |-----------|----------|--------------|-----------|-------------|--------|
-| EV vs hydrogen | 4 | 4 | 4 | 4 | **PASS** |
-| Remote work effects | 4 | 4 | 4 | 3 | **PASS** |
+| EV vs hydrogen | 5 | 5 | 4 | 4 | **PASS** |
+| Remote work effects | 5 | 4 | 5 | 4 | **PASS** |
+| Customer support | 5 | 5 | 5 | 5 | **PASS** |
+| AI regulation tradeoffs | 5 | 5 | 5 | 5 | **PASS** |
+| Social media moderation | 5 | 5 | 5 | 5 | **PASS** |
+| Travel booking | 5 | 5 | 5 | 5 | **PASS** |
 
-**2/2 passing** | Average scores: coverage 4.0, distinctness 4.0, relevance 4.0, granularity 3.5 | ~8s total runtime on Claude Haiku 4.5
+**6/6 passing** | Average scores: coverage 5.0, distinctness 4.8, relevance 4.8, granularity 4.7
 
 ```bash
-cd go
-ANTHROPIC_API_KEY=sk-... go test -v -run TestEvalDecomposition -timeout 300s ./...
+# Uses HYDRA_EVAL_MODEL and HYDRA_JUDGE_MODEL from .env
+mise run eval
+
+# Or directly
+cd go && go test -v -run TestEvalDecomposition -timeout 300s ./...
 ```
 
 ## Development
@@ -700,11 +797,23 @@ The decomposition prompt used by all three adapters lives in [`protocol/decompos
 
 ### Configurable Eval Models
 
+Set in `.env` — evals load it automatically:
+
 ```bash
-# Default: both use Haiku
-HYDRA_EVAL_MODEL=claude-haiku-4-5-20251001   # model Hydra decomposes with
-HYDRA_JUDGE_MODEL=claude-haiku-4-5-20251001  # model the judge scores with
+# Anthropic
+HYDRA_EVAL_MODEL=claude-haiku-4-5-20251001
+HYDRA_JUDGE_MODEL=claude-sonnet-4-6
+
+# Gemini
+HYDRA_EVAL_MODEL=gemini-2.5-flash
+HYDRA_JUDGE_MODEL=gemini-2.5-flash
+
+# Mix providers
+HYDRA_EVAL_MODEL=gemini-2.5-flash        # decomposer
+HYDRA_JUDGE_MODEL=claude-sonnet-4-6      # judge (needs ANTHROPIC_API_KEY)
 ```
+
+The eval harness auto-routes to the right adapter based on model name prefix (`claude-*` → Anthropic, `gemini-*` → Google AI Studio).
 
 ## License
 
